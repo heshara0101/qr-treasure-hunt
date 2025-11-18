@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - QR Treasure Hunt</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/user.css">
+</head>
+<body>
+    <div class="navbar user-navbar">
+        <div class="nav-container">
+            <div class="logo">🗺️ QR Treasure Hunt</div>
+            <nav class="nav-menu">
+                <span class="user-info" id="userName">User</span>
+                <a href="#" class="nav-link" onclick="logout()">Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="user-container">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showSection('events')" class="menu-item active" data-section="events">📅 Available Events</a></li>
+                <li><a href="#" onclick="showSection('my-events')" class="menu-item" data-section="my-events">🎯 My Events</a></li>
+                <li><a href="#" onclick="showSection('scan-qr')" class="menu-item" data-section="scan-qr">📱 Scan QR Code</a></li>
+                <li><a href="#" onclick="showSection('progress')" class="menu-item" data-section="progress">📊 My Progress</a></li>
+                <li><a href="#" onclick="showSection('profile')" class="menu-item" data-section="profile">👤 My Profile</a></li>
+            </ul>
+        </aside>
+
+        <main class="user-content">
+            <!-- Available Events Section -->
+            <section id="events" class="section active">
+                <h2>Available Events</h2>
+                <div class="events-grid" id="eventsGrid">
+                    <!-- Events will be loaded here -->
+                </div>
+            </section>
+
+            <!-- My Events Section -->
+            <section id="my-events" class="section">
+                <h2>My Events</h2>
+                <div class="my-events-list" id="myEventsList">
+                    <!-- User's events will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Scan QR Code Section -->
+            <section id="scan-qr" class="section">
+                <h2>Scan QR Code</h2>
+                <div class="scan-container">
+                    <div id="reader" style="width: 100%; max-width: 500px;"></div>
+                    <div id="scanResult" class="scan-result"></div>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section id="progress" class="section">
+                <h2>My Progress</h2>
+                <div id="progressContainer" class="progress-container">
+                    <!-- Progress data will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section">
+                <h2>My Profile</h2>
+                <form id="profileForm" onsubmit="handleProfileUpdate(event)" class="profile-form">
+                    <div class="form-group">
+                        <label for="profileName">Full Name:</label>
+                        <input type="text" id="profileName">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileEmail">Email:</label>
+                        <input type="email" id="profileEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="profilePhone">Phone:</label>
+                        <input type="tel" id="profilePhone">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="eventDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="eventTitle">Event Details</h2>
+            <div id="eventDetailsBody"></div>
+            <button class="btn btn-primary" onclick="joinEvent()">Join Event</button>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="taskTitle">Level <span id="currentLevel">1</span> - Task <span id="currentTask">1</span></h2>
+            <div id="taskDetails"></div>
+            <div id="taskForm"></div>
+            <button class="btn btn-primary" onclick="submitTask()">Submit Answer</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 QR Treasure Hunt. All rights reserved.</p>
+    </footer>
+
+    <!-- QR Code Scanner Library -->
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.4/dist/html5-qrcode.min.js"></script>
+    
+    <script src="../js/user-main.js"></script>
+    <script src="../js/user-events.js"></script>
+    <script src="../js/user-scanner.js"></script>
+    <script src="../js/user-progress.js"></script>
+</body>
+</html>
