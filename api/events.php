@@ -99,56 +99,116 @@ function handleListEvents() {
     jsonResponse(true, 'Events retrieved', $events);
 }
 
-function handleGetEvent() {
+function handleGetEvent()
+{
     global $db;
-    
+
     $user = getAuthUser();
     if (!$user) {
         jsonResponse(false, 'Unauthorized', null, 401);
     }
-    
-    $event_id = $_GET['id'] ?? null;
-    if (!$event_id) {
+
+    // Get and validate event_id
+    if (!isset($_GET['id'])) {
         jsonResponse(false, 'Event ID required', null, 400);
     }
-    
+
+    // Force event_id to integer
+    $event_id = (int)$_GET['id'];
+    if ($event_id <= 0) {
+        jsonResponse(false, 'Valid Event ID required', null, 400);
+    }
+
+    // ---------- GET EVENT ----------
     $stmt = $db->prepare("SELECT * FROM events WHERE id = ?");
+    if (!$stmt) {
+        jsonResponse(false, 'DB error (prepare event): ' . $db->error, null, 500);
+    }
+
     $stmt->bind_param("i", $event_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
+    if (!$result) {
+        jsonResponse(false, 'DB error (execute event): ' . $stmt->error, null, 500);
+    }
+
     if ($result->num_rows === 0) {
         jsonResponse(false, 'Event not found', null, 404);
     }
-    
+
     $event = $result->fetch_assoc();
-    
-    // Get levels
+    $stmt->close();
+
+    // ---------- GET LEVELS ----------
     $stmt = $db->prepare("SELECT * FROM levels WHERE event_id = ? ORDER BY level_number");
+    if (!$stmt) {
+        jsonResponse(false, 'DB error (prepare levels): ' . $db->error, null, 500);
+    }
+
     $stmt->bind_param("i", $event_id);
     $stmt->execute();
     $levelsResult = $stmt->get_result();
-    
+
+    if (!$levelsResult) {
+        jsonResponse(false, 'DB error (execute levels): ' . $stmt->error, null, 500);
+    }
+
     $levels = [];
     while ($level = $levelsResult->fetch_assoc()) {
-        // Get tasks for each level
+
+        // ---------- GET TASKS FOR THIS LEVEL ----------
         $taskStmt = $db->prepare("SELECT * FROM tasks WHERE level_id = ? ORDER BY task_number");
-        $taskStmt->bind_param("i", $level['id']);
+        if (!$taskStmt) {
+            jsonResponse(false, 'DB error (prepare tasks): ' . $db->error, null, 500);
+        }
+
+        $level_id = (int)$level['id'];
+        $taskStmt->bind_param("i", $level_id);
         $taskStmt->execute();
         $tasksResult = $taskStmt->get_result();
-        
+
+        if (!$tasksResult) {
+            jsonResponse(false, 'DB error (execute tasks): ' . $taskStmt->error, null, 500);
+        }
+
         $tasks = [];
         while ($task = $tasksResult->fetch_assoc()) {
-            $task['options'] = json_decode($task['options'], true);
+            // Decode JSON options if not null/empty
+            if (!empty($task['options'])) {
+                $task['options'] = json_decode($task['options'], true);
+            } else {
+                $task['options'] = [];
+            }
             $tasks[] = $task;
         }
-        
+
+        $taskStmt->close();
+
         $level['tasks'] = $tasks;
         $levels[] = $level;
     }
-    
+
+    $stmt->close();
+
     $event['levels'] = $levels;
-    jsonResponse(true, 'Event retrieved', $event);
+
+    jsonResponse(true, 'Event retrieved', $event, 200);
+}
+
+// ============================
+// ROUTER
+// ============================
+
+$action = $_GET['action'] ?? null;
+
+switch ($action) {
+    case 'get':
+        handleGetEvent();
+        break;
+
+    default:
+        jsonResponse(false, 'Unknown or missing action', null, 400);
 }
 
 function handleUpdateEvent($input) {
