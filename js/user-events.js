@@ -95,13 +95,30 @@ async function joinEvent() {
     try {
         const res = await api.joinEvent(eventId);
         if (res.success) {
-            alert('Event joined successfully!');
-            closeModal();
-            await loadAvailableEvents();
-            await loadMyEvents();
-        } else {
-            alert(res.message || 'Failed to join event');
-        }
+        alert('Event joined successfully!');
+
+        // Close modal
+        closeModal();
+
+        // Reload event lists
+        await loadAvailableEvents();
+        await loadMyEvents();
+
+        // Redirect to Scan QR tab
+        showSection('scan-qr');
+
+        // Start scanner safely after DOM updates
+        setTimeout(() => {
+            if (typeof initializeScanner === 'function') {
+                initializeScanner();
+            } else {
+                console.error('initializeScanner() not found.');
+            }
+        }, 100); // 100ms delay ensures scripts loaded
+    } else {
+        alert(res.message || 'Failed to join event');
+    }
+
     } catch (error) {
         console.error('Join event error:', error);
         alert('Failed to join event');

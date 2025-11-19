@@ -131,6 +131,13 @@ class APIClient {
             qr_value
         });
     }
+    
+     getEventResults(eventId) {
+        return this.request(
+            `admin.php?action=get-event-results&event_id=${eventId}`,
+            "GET"
+        );
+    }
 
     // ========== Progress ==========
 

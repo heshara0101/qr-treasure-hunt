@@ -140,23 +140,40 @@ async function handleServerScan(qrValue) {
     }
 
     try {
-        // Scan QR to get the task definition
+        // 1. Scan QR to get the task
         const scanResp = await api.scanQR(qr);
         if (!scanResp || !scanResp.success) {
             throw new Error(scanResp?.message || 'Invalid QR code');
         }
+        const task = scanResp.data;
 
-        // Optional: get progress (for display/use later)
+        // 2. Get user events (progress)
         const progressResp = await api.getProgress();
         if (!progressResp || !progressResp.success) {
             throw new Error(progressResp?.message || 'Unable to load current progress');
         }
 
-        const task = scanResp.data;         // { id, level_id, task_number, type, question, options, ... }
-        const userEvent = progressResp.data; // { id, event_id, ... } (shape depends on your backend)
+        const userEvents = Array.isArray(progressResp.data) ? progressResp.data : [];
+
+        // 3. Pick the correct userEvent matching the scanned task
+        let userEvent = null;
+
+        if (task.event_id) {
+            userEvent = userEvents.find(ue => ue.event_id === task.event_id);
+        }
+
+        // If not found, fallback to first active event
+        if (!userEvent && userEvents.length > 0) {
+            userEvent = userEvents[0];
+        }
+
+        if (!userEvent) throw new Error('No active event found for this task');
+
+        // Store for submitTask()
+        window.currentTaskContext = { task, userEvent };
 
         console.log('task from scan-qr =', task);
-        console.log('userEvent from getProgress =', userEvent);
+        console.log('userEvent selected =', userEvent);
 
         if (qrScanner && scannerActive) {
             await qrScanner.stop();
@@ -170,20 +187,6 @@ async function handleServerScan(qrValue) {
     }
 }
 
-/**
- * Show an error message under the scanner
- */
-function showScanError(message) {
-    const resultDiv = document.getElementById('scanResult');
-    if (!resultDiv) return;
-
-    resultDiv.className = 'scan-result error show';
-    resultDiv.innerHTML = `<strong>⚠️ ${message}</strong>`;
-
-    setTimeout(() => {
-        resultDiv.classList.remove('show');
-    }, 5000);
-}
 
 /**
  * Build and show the task modal using the task from PHP
@@ -246,89 +249,52 @@ function showTask(task, userEvent) {
  */
 async function submitTask() {
     const ctx = window.currentTaskContext;
-    if (!ctx) {
-        alert('No active task to submit.');
-        return;
-    }
+    if (!ctx) return alert('No active task.');
 
-    const { task } = ctx;
+    const { task, userEvent } = ctx;
+    if (!userEvent) return alert('User event not found.');
+
     let answer = null;
 
-    // 1. Collect answer
     if (task.type === 'mcq') {
         const selected = document.querySelector('input[name="mcq-answer"]:checked');
-        if (!selected) {
-            alert('Please select an option');
-            return;
-        }
-        const index = Number(selected.value);
-        // send actual option text (avoid "0" looking empty)
-        answer = Array.isArray(task.options) ? task.options[index] : '';
+        if (!selected) return alert('Please select an option');
+        answer = task.options[selected.value];
     } else if (task.type === 'text') {
         const input = document.getElementById('textAnswer');
-        if (!input || !input.value.trim()) {
-            alert('Please enter your answer');
-            return;
-        }
+        if (!input || !input.value.trim()) return alert('Please enter your answer');
         answer = input.value.trim();
     } else if (task.type === 'image') {
         const fileInput = document.getElementById('imageUpload');
-        if (!fileInput || !fileInput.files.length) {
-            alert('Please upload an image');
-            return;
-        }
-        // For now: just a flag; real upload is separate
+        if (!fileInput || !fileInput.files.length) return alert('Please upload an image');
         answer = 'image_uploaded';
     }
 
-    console.log('submitTask about to call api.submitAnswer with:', {
-        task_id: task.id,
-        level_id: task.level_id,
-        event_id: null,
-        user_event_id: null,
-        answer
-    });
-
     try {
-        // IMPORTANT:
-        // We PASS null for eventId and userEventId so php-api.js
-        // will auto-fill them using getProgress()
         const submitResp = await api.submitAnswer(
             task.id,
             task.level_id,
-            null,      // let php-api resolve event_id
+            userEvent.event_id,  // pass actual event ID
             answer,
-            null       // let php-api resolve user_event_id
+            userEvent.id         // pass actual user_event ID
         );
 
-        if (!submitResp || !submitResp.success) {
-            throw new Error(submitResp?.message || 'Task submission failed');
-        }
+        if (!submitResp.success) throw new Error(submitResp.message);
 
         alert('✓ Task submitted successfully!');
+        if (typeof closeModal === 'function') closeModal();
+        else document.getElementById('taskModal').classList.remove('active');
 
-        if (typeof closeModal === 'function') {
-            closeModal();
-        } else {
-            const modal = document.getElementById('taskModal');
-            if (modal) modal.classList.remove('active');
-        }
+        if (typeof loadMyEvents === 'function') await loadMyEvents();
+        if (typeof loadProgress === 'function') await loadProgress();
 
-        if (typeof loadMyEvents === 'function') {
-            await loadMyEvents();
-        }
-        if (typeof loadProgress === 'function') {
-            await loadProgress();
-        }
-
-        if (qrScanner && !scannerActive) {
-            initializeScanner();
-        }
+        if (qrScanner && !scannerActive) initializeScanner();
     } catch (err) {
         console.error('Submit task error:', err);
         alert('❌ Failed to submit task: ' + (err?.message || 'Unknown error'));
     }
 }
+
 
 /**
  * Ignore continuous scan errors from camera scanning
