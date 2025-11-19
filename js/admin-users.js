@@ -1,129 +1,111 @@
 // Admin Users Management
 
-window.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('userSearch').addEventListener('keyup', searchUsers);
-});
+async function loadUsers() {
+    try {
+        const usersRes = await api.getAllUsers();
+        const users = usersRes.data || [];
 
-function loadUsers() {
-    const users = StorageManager.get('users') || [];
-    const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = '';
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = '';
 
-    if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No users registered yet</td></tr>';
-        return;
-    }
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">No users registered yet</td></tr>';
+            return;
+        }
 
-    users.forEach(user => {
-        const registeredDate = new Date(user.createdAt).toLocaleDateString();
-        const userEvents = StorageManager.get('userEvents') || [];
-        const joinedEvents = userEvents.filter(ue => ue.userId === user.id);
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.fullname}</td>
-            <td>${user.email}</td>
-            <td>${user.phone || '-'}</td>
-            <td>${registeredDate}</td>
-            <td>${joinedEvents.length}</td>
-            <td><span class="status-badge status-active">Active</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="viewUserDetails('${user.id}')">View</button>
-                    <button class="action-btn delete-btn" onclick="deleteUser('${user.id}')">Remove</button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function searchUsers() {
-    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
-    const rows = document.querySelectorAll('tbody tr');
-
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(searchTerm) ? '' : 'none';
-    });
-}
-
-function viewUserDetails(userId) {
-    const users = StorageManager.get('users') || [];
-    const user = users.find(u => u.id === userId);
-
-    if (!user) return;
-
-    const modal = document.getElementById('eventModal');
-    const modalBody = document.getElementById('modalBody');
-    const modalTitle = document.getElementById('modalTitle');
-
-    modalTitle.textContent = 'User Details';
-
-    const userEvents = StorageManager.get('userEvents') || [];
-    const userParticipation = userEvents.filter(ue => ue.userId === userId);
-
-    let detailsHTML = `
-        <div class="results-detail">
-            <div class="result-item">
-                <span class="result-label">Full Name:</span>
-                <span class="result-value">${user.fullname}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Email:</span>
-                <span class="result-value">${user.email}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Phone:</span>
-                <span class="result-value">${user.phone || '-'}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Registered:</span>
-                <span class="result-value">${new Date(user.createdAt).toLocaleDateString()}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Events Joined:</span>
-                <span class="result-value">${userParticipation.length}</span>
-            </div>
-    `;
-
-    if (userParticipation.length > 0) {
-        detailsHTML += '<h4 style="margin-top: 1rem; margin-bottom: 0.5rem;">Event Participation:</h4>';
-        userParticipation.forEach(up => {
-            const status = up.status === 'completed' ? 'Completed' : 'In Progress';
-            detailsHTML += `
-                <div style="margin-left: 1rem; padding: 0.5rem; background: var(--light-bg); border-radius: 4px; margin-bottom: 0.5rem;">
-                    <strong>${up.eventName}</strong> - ${status}
-                </div>
+        for (let user of users) {
+            const registeredDate = new Date(user.created_at).toLocaleDateString();
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td>${user.phone || '-'}</td>
+                <td>${registeredDate}</td>
+                <td>--</td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="action-btn view-btn" onclick="viewUserDetails('${user.id}')">View</button>
+                        <button class="action-btn delete-btn" onclick="deleteUser('${user.id}')">Remove</button>
+                    </div>
+                </td>
             `;
-        });
-    }
+            tbody.appendChild(row);
+        }
 
-    detailsHTML += '</div>';
-    modalBody.innerHTML = detailsHTML;
-    modal.classList.add('active');
+    } catch (error) {
+        console.error(error);
+        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center">Failed to load users</td></tr>';
+    }
 }
 
-function deleteUser(userId) {
+async function viewUserDetails(userId) {
+    try {
+        const userRes = await api.getUserDetail(userId);
+        const user = userRes.data;
+        if (!user) return;
+
+        const modal = document.getElementById('eventModal');
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+
+        modalTitle.textContent = 'User Details';
+
+        let participationHTML = '';
+        if (user.events && user.events.length > 0) {
+            participationHTML += '<h4>Event Participation:</h4>';
+            user.events.forEach(evt => {
+                const status = evt.status === 'completed' ? 'Completed' : 'In Progress';
+                participationHTML += `
+                    <div style="margin-left:1rem; padding:0.5rem; background:var(--light-bg); border-radius:4px; margin-bottom:0.5rem;">
+                        <strong>${evt.name}</strong> - ${status}
+                    </div>
+                `;
+            });
+        }
+
+        modalBody.innerHTML = `
+            <div class="results-detail">
+                <div class="result-item"><span class="result-label">Full Name:</span><span class="result-value">${user.name}</span></div>
+                <div class="result-item"><span class="result-label">Email:</span><span class="result-value">${user.email}</span></div>
+                <div class="result-item"><span class="result-label">Phone:</span><span class="result-value">${user.phone || '-'}</span></div>
+                <div class="result-item"><span class="result-label">Registered:</span><span class="result-value">${new Date(user.created_at).toLocaleDateString()}</span></div>
+                <div class="result-item"><span class="result-label">Events Joined:</span><span class="result-value">${user.events?.length || 0}</span></div>
+                ${participationHTML}
+            </div>
+        `;
+
+        modal.classList.add('active');
+    } catch (error) {
+        console.error(error);
+        alert('Failed to load user details');
+    }
+}
+
+async function deleteUser(userId) {
     if (!confirm('Are you sure you want to remove this user?')) return;
-
-    let users = StorageManager.get('users') || [];
-    users = users.filter(u => u.id !== userId);
-    StorageManager.set('users', users);
-
-    loadUsers();
-}
-
-// Load users when section is shown
-const originalShowSection = window.showSection;
-window.showSection = function(sectionId) {
-    originalShowSection(sectionId);
-    if (sectionId === 'users') {
-        loadUsers();
-    } else if (sectionId === 'events') {
-        loadEvents();
+    try {
+        const res = await api.request(`admin.php?action=delete-user&user_id=${userId}`, 'DELETE');
+        if (res.success) {
+            alert('User removed successfully');
+            await loadUsers();
+        } else {
+            alert(res.message || 'Failed to delete user');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Error deleting user');
     }
 }
+
+// Search functionality
+document.getElementById('userSearch').addEventListener('keyup', function() {
+    const searchTerm = this.value.toLowerCase();
+    document.querySelectorAll('#usersTableBody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+    });
+});
 
 // Initial load
 loadUsers();

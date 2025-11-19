@@ -77,11 +77,6 @@ class APIClient {
         return this.request('auth.php?action=get-user');
     }
 
-    logout() {
-        localStorage.removeItem('token');
-        this.token = null;
-    }
-
     // Events
     async createEvent(title, description) {
         return this.request('events.php?action=create', 'POST', {
@@ -140,8 +135,8 @@ class APIClient {
         });
     }
 
-    async getProgress(eventId) {
-        return this.request(`progress.php?action=get-progress&event_id=${eventId}`);
+    async getProgress() {
+        return this.request(`progress.php?action=get-progress`);
     }
 
     async submitAnswer(taskId, levelId, eventId, answer) {

@@ -1,183 +1,173 @@
-// User Events & Participation
+// user-events.js
+// Handles User Events & Participation using APIClient
 
-function loadAvailableEvents() {
-    const events = StorageManager.get('events') || [];
-    const userEvents = StorageManager.get('userEvents') || [];
-    const currentUser = AuthManager.getCurrentUser();
+async function loadAvailableEvents() {
+    try {
+        const res = await api.listEvents();
+        if (!res.success) throw new Error(res.message);
+        const events = res.data || [];
 
-    const eventsGrid = document.getElementById('eventsGrid');
-    eventsGrid.innerHTML = '';
+        const userRes = await api.getUser();
+        if (!userRes.success) throw new Error(userRes.message);
+        const currentUser = userRes.data;
 
-    if (events.length === 0) {
-        eventsGrid.innerHTML = '<p>No events available at the moment</p>';
-        return;
-    }
+        const progressRes = await api.getProgress();
+        const allProgress = (progressRes.success && Array.isArray(progressRes.data)) ? progressRes.data : [];
 
-    events.forEach(event => {
-        const hasJoined = userEvents.some(ue => ue.userId === currentUser.id && ue.eventId === event.id);
-        const participants = userEvents.filter(ue => ue.eventId === event.id).length;
+        const eventsGrid = document.getElementById('eventsGrid');
+        eventsGrid.innerHTML = '';
 
-        const eventCard = document.createElement('div');
-        eventCard.className = 'event-card';
-        eventCard.innerHTML = `
-            <div class="event-header">
-                <h3>${event.name}</h3>
-                <p>${event.description}</p>
-            </div>
-            <div class="event-body">
-                <div class="event-info">
-                    <div class="event-info-item">
-                        <span class="event-info-label">Levels</span>
-                        <span class="event-info-value">${event.levels.length}</span>
-                    </div>
-                    <div class="event-info-item">
-                        <span class="event-info-label">Participants</span>
-                        <span class="event-info-value">${participants}</span>
-                    </div>
+        if (events.length === 0) {
+            eventsGrid.innerHTML = '<p>No events available at the moment</p>';
+            return;
+        }
+
+        for (const event of events) {
+            const eventId = event.id || event.event_id; // adjust if PHP returns 'event_id'
+            const userProgress = allProgress.find(p => p.event_id == eventId) || { status: 'not-joined', completed_tasks: [] };
+            const hasJoined = userProgress.status !== 'not-joined';
+            const participants = event.total_joined || 0;
+
+            const eventCard = document.createElement('div');
+            eventCard.className = 'event-card';
+            eventCard.innerHTML = `
+                <div class="event-header">
+                    <h3>${event.title}</h3>
+                    <p>${event.description}</p>
                 </div>
-                <p class="event-description">${event.description}</p>
-                <button class="btn btn-primary" onclick="joinEventConfirm('${event.id}')">
-                    ${hasJoined ? 'Already Joined' : 'Join Event'}
-                </button>
-            </div>
-        `;
-        eventsGrid.appendChild(eventCard);
-    });
+                <div class="event-body">
+                    <div class="event-info">
+                        <div class="event-info-item">
+                            <span class="event-info-label">Levels</span>
+                            <span class="event-info-value">${event.levels?.length || 0}</span>
+                        </div>
+                        <div class="event-info-item">
+                            <span class="event-info-label">Participants</span>
+                            <span class="event-info-value">${participants}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="joinEventConfirm('${eventId}')">
+                        ${hasJoined ? 'Already Joined' : 'Join Event'}
+                    </button>
+                </div>
+            `;
+            eventsGrid.appendChild(eventCard);
+        }
+
+    } catch (error) {
+        console.error('Load available events error:', error);
+        document.getElementById('eventsGrid').innerHTML = `<p>Error loading events: ${error.message}</p>`;
+    }
 }
 
-function joinEventConfirm(eventId) {
-    const events = StorageManager.get('events') || [];
-    const event = events.find(e => e.id === eventId);
+async function joinEventConfirm(eventId) {
+    try {
+        const res = await api.getEvent(eventId);
+        if (!res.success || !res.data) return;
+        const event = res.data;
 
-    if (!event) return;
+        const modal = document.getElementById('eventDetailsModal');
+        const detailsBody = document.getElementById('eventDetailsBody');
+        const eventTitle = document.getElementById('eventTitle');
 
-    const modal = document.getElementById('eventDetailsModal');
-    const detailsBody = document.getElementById('eventDetailsBody');
-    const eventTitle = document.getElementById('eventTitle');
+        eventTitle.textContent = event.title;
 
-    eventTitle.textContent = event.name;
+        let detailsHTML = `<p>${event.description}</p><h4>Event Structure:</h4>`;
+        event.levels?.forEach(level => {
+            detailsHTML += `<div style="margin-left:1rem;padding:0.75rem;background:#f0f0f0;border-radius:4px;margin-bottom:0.5rem;">
+                <strong>Level ${level.level_number}:</strong> ${level.title} (${level.tasks?.length || 0} tasks)
+            </div>`;
+        });
 
-    let detailsHTML = `
-        <div style="margin-bottom: 1.5rem;">
-            <p>${event.description}</p>
-            <h4 style="margin-top: 1rem; margin-bottom: 0.5rem; color: var(--primary-color);">Event Structure:</h4>
-    `;
+        detailsBody.innerHTML = detailsHTML;
+        modal.classList.add('active');
+        window.currentEventToJoin = eventId;
 
-    event.levels.forEach(level => {
-        detailsHTML += `
-            <div style="margin-left: 1rem; padding: 0.75rem; background: var(--light-bg); border-radius: 4px; margin-bottom: 0.5rem;">
-                <strong>Level ${level.levelNumber}:</strong> ${level.name} (${level.tasks.length} tasks)
-            </div>
-        `;
-    });
-
-    detailsHTML += '</div>';
-    detailsBody.innerHTML = detailsHTML;
-
-    modal.classList.add('active');
-    window.currentEventToJoin = eventId;
+    } catch (error) {
+        console.error('Join event confirm error:', error);
+    }
 }
 
-function joinEvent() {
+async function joinEvent() {
     const eventId = window.currentEventToJoin;
-    const events = StorageManager.get('events') || [];
-    const event = events.find(e => e.id === eventId);
-    const currentUser = AuthManager.getCurrentUser();
+    if (!eventId) return;
 
-    if (!event) {
-        alert('Event not found');
-        return;
+    try {
+        const res = await api.joinEvent(eventId);
+        if (res.success) {
+            alert('Event joined successfully!');
+            closeModal();
+            await loadAvailableEvents();
+            await loadMyEvents();
+        } else {
+            alert(res.message || 'Failed to join event');
+        }
+    } catch (error) {
+        console.error('Join event error:', error);
+        alert('Failed to join event');
     }
-
-    // Check if already joined
-    const userEvents = StorageManager.get('userEvents') || [];
-    if (userEvents.some(ue => ue.userId === currentUser.id && ue.eventId === event.id)) {
-        alert('You have already joined this event');
-        return;
-    }
-
-    // Create user event participation
-    const userEvent = {
-        id: Date.now().toString(),
-        userId: currentUser.id,
-        userName: currentUser.fullname,
-        eventId: eventId,
-        eventName: event.name,
-        status: 'in-progress',
-        currentLevel: 1,
-        currentTask: 1,
-        startedAt: new Date().toISOString(),
-        completedAt: null,
-        wrongQRScans: [],
-        completedTasks: []
-    };
-
-    userEvents.push(userEvent);
-    StorageManager.set('userEvents', userEvents);
-
-    // Update event participant count
-    event.participants = (event.participants || 0) + 1;
-    StorageManager.set('events', events);
-
-    alert('Event joined successfully! Start scanning QR codes.');
-    closeModal();
-    loadAvailableEvents();
-    loadMyEvents();
 }
 
-function loadMyEvents() {
-    const userEvents = StorageManager.get('userEvents') || [];
-    const events = StorageManager.get('events') || [];
-    const currentUser = AuthManager.getCurrentUser();
+async function loadMyEvents() {
+    try {
+        const progressRes = await api.getProgress();
+        if (!progressRes.success) throw new Error(progressRes.message);
+        const progressList = progressRes.data || [];
 
-    const myEventsList = document.getElementById('myEventsList');
-    myEventsList.innerHTML = '';
+        const eventsRes = await api.listEvents();
+        if (!eventsRes.success) throw new Error(eventsRes.message);
+        const events = eventsRes.data || [];
 
-    const userJoinedEvents = userEvents.filter(ue => ue.userId === currentUser.id);
+        const myEventsList = document.getElementById('myEventsList');
+        myEventsList.innerHTML = '';
 
-    if (userJoinedEvents.length === 0) {
-        myEventsList.innerHTML = '<p>You haven\'t joined any events yet. <a href="#" onclick="showSection(\'events\')">Browse events</a></p>';
-        return;
+        if (progressList.length === 0) {
+            myEventsList.innerHTML = '<p>You haven\'t joined any events yet. <a href="#" onclick="showSection(\'events\')">Browse events</a></p>';
+            return;
+        }
+
+        progressList.forEach(ue => {
+            const event = events.find(e => (e.id || e.event_id) == ue.event_id);
+            if (!event) return;
+
+            const totalTasks = event.levels?.reduce((sum, level) => sum + (level.tasks?.length || 0), 0) || 0;
+            const completedTasks = ue.tasks_completed || 0;
+            const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            const eventItem = document.createElement('div');
+            eventItem.className = 'my-event-item';
+            eventItem.innerHTML = `
+                <div class="event-info-section">
+                    <h3>${event.title}</h3>
+                    <p>${event.description}</p>
+                    <button class="btn btn-primary" onclick="continueEvent('${ue.id || ue.event_id}')">
+                        ${ue.progress_percentage === 100 ? 'View Results' : 'Continue'}
+                    </button>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-stat">
+                        <span class="progress-stat-label">Status:</span>
+                        <span class="progress-stat-value">${ue.progress_percentage === 100 ? '✓ Completed' : '⏳ In Progress'}</span>
+                    </div>
+                    <div class="progress-stat">
+                        <span class="progress-stat-label">Current Level:</span>
+                        <span class="progress-stat-value">${ue.current_level}/${event.levels?.length || 0}</span>
+                    </div>
+                    <div class="progress-stat">
+                        <span class="progress-stat-label">Completion:</span>
+                        <span class="progress-stat-value">${completionPercent}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${completionPercent}%;"></div>
+                    </div>
+                </div>
+            `;
+            myEventsList.appendChild(eventItem);
+        });
+
+    } catch (error) {
+        console.error('Load my events error:', error);
     }
-
-    userJoinedEvents.forEach(ue => {
-        const event = events.find(e => e.id === ue.eventId);
-        if (!event) return;
-
-        const totalTasks = event.levels.reduce((sum, level) => sum + (level.tasks ? level.tasks.length : 0), 0);
-        const completedTasks = ue.completedTasks.length;
-        const completionPercent = Math.round((completedTasks / totalTasks) * 100);
-
-        const eventItem = document.createElement('div');
-        eventItem.className = 'my-event-item';
-        eventItem.innerHTML = `
-            <div class="event-info-section">
-                <h3>${event.name}</h3>
-                <p>${event.description}</p>
-                <button class="btn btn-primary" onclick="continueEvent('${ue.id}')">
-                    ${ue.status === 'completed' ? 'View Results' : 'Continue'}
-                </button>
-            </div>
-            <div class="progress-section">
-                <div class="progress-stat">
-                    <span class="progress-stat-label">Status:</span>
-                    <span class="progress-stat-value">${ue.status === 'completed' ? '✓ Completed' : '⏳ In Progress'}</span>
-                </div>
-                <div class="progress-stat">
-                    <span class="progress-stat-label">Current Level:</span>
-                    <span class="progress-stat-value">${ue.currentLevel}/${event.levels.length}</span>
-                </div>
-                <div class="progress-stat">
-                    <span class="progress-stat-label">Completion:</span>
-                    <span class="progress-stat-value">${completionPercent}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${completionPercent}%;"></div>
-                </div>
-            </div>
-        `;
-        myEventsList.appendChild(eventItem);
-    });
 }
 
 function continueEvent(userEventId) {
@@ -186,9 +176,7 @@ function continueEvent(userEventId) {
 }
 
 function closeModal() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.remove('active');
-    });
+    document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
 }
 
 window.onclick = function(event) {
@@ -196,3 +184,9 @@ window.onclick = function(event) {
         event.target.classList.remove('active');
     }
 }
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    loadAvailableEvents();
+    loadMyEvents();
+});

@@ -1,4 +1,4 @@
-// QR Code Scanner & Task Submission
+// QR Code Scanner & Task Submission using APIClient
 
 let qrScanner = null;
 let scannerActive = false;
@@ -6,30 +6,38 @@ let scannerActive = false;
 function initializeScanner() {
     if (scannerActive) return;
 
+    if (typeof Html5Qrcode === 'undefined') {
+        console.error('Html5Qrcode library is not loaded!');
+        document.getElementById('scanResult').innerHTML = `
+            <div class="scan-result error show">
+                <strong>Error:</strong> QR code library not loaded.
+            </div>
+        `;
+        return;
+    }
+
     const reader = document.getElementById('reader');
-    reader.innerHTML = ''; // Clear previous
+    reader.innerHTML = '';
 
     qrScanner = new Html5Qrcode('reader');
-    
+
     qrScanner.start(
         { facingMode: 'environment' },
-        {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-        },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
         onQRCodeScanned,
         onScanError
     ).then(() => {
         scannerActive = true;
     }).catch(err => {
-        console.log('Unable to start scanner:', err);
+        console.error('Unable to start scanner:', err);
         document.getElementById('scanResult').innerHTML = `
             <div class="scan-result error show">
-                <strong>Error:</strong> Unable to access camera. Please check permissions.
+                <strong>Error:</strong> Unable to access camera. Check permissions.
             </div>
         `;
     });
 }
+
 
 function onQRCodeScanned(decodedText) {
     try {
@@ -41,55 +49,39 @@ function onQRCodeScanned(decodedText) {
 }
 
 function onScanError(error) {
-    // Suppress errors from continuous scanning
+    // Ignore continuous scan errors
 }
 
-function handleQRScan(qrData) {
-    const userEvents = StorageManager.get('userEvents') || [];
-    const events = StorageManager.get('events') || [];
+async function handleQRScan(qrData) {
     const userEventId = window.currentUserEventId;
+    if (!userEventId) return showScanError('No active event');
 
-    if (!userEventId) {
-        showScanError('No active event');
-        return;
-    }
+    try {
+        // Use API to get user event progress
+        const progressResp = await api.getProgress(userEventId);
+        if (!progressResp.success) throw new Error(progressResp.message);
 
-    const userEvent = userEvents.find(ue => ue.id === userEventId);
-    const event = events.find(e => e.id === userEvent.eventId);
+        const userEvent = progressResp.data;
 
-    if (!event) {
-        showScanError('Event not found');
-        return;
-    }
+        const eventResp = await api.getEvent(userEvent.event_id);
+        if (!eventResp.success) throw new Error(eventResp.message);
+        const event = eventResp.data;
 
-    // Check if QR code matches current position
-    if (qrData.level === userEvent.currentLevel && qrData.task === userEvent.currentTask) {
-        // Correct QR code - show task
-        if (qrScanner && scannerActive) {
-            qrScanner.stop().then(() => {
+        // Check QR correctness
+        if (qrData.level === userEvent.current_level_id && qrData.task === userEvent.current_task_id) {
+            if (qrScanner && scannerActive) {
+                await qrScanner.stop();
                 scannerActive = false;
-            });
+            }
+            showTask(event, userEvent, qrData.level, qrData.task);
+        } else {
+            // Wrong QR - report to API
+            await api.scanQR(JSON.stringify(qrData)); // Assuming API records wrong scans
+            showScanError(`❌ Wrong QR Code! You scanned Level ${qrData.level} - Task ${qrData.task}. Complete Level ${userEvent.current_level_id} - Task ${userEvent.current_task_id} first.`);
         }
-        showTask(event, userEvent, qrData.level, qrData.task);
-    } else {
-        // Wrong QR code - alert user
-        const wrongScan = {
-            attemptedLevel: qrData.level,
-            attemptedTask: qrData.task,
-            timestamp: new Date().toISOString()
-        };
-
-        userEvent.wrongQRScans.push(wrongScan);
-        userEvent.status = 'wrong-qr';
-
-        StorageManager.set('userEvents', userEvents);
-
-        showScanError(
-            `❌ Wrong QR Code!\n\n` +
-            `You scanned: Level ${qrData.level} - Task ${qrData.task}\n` +
-            `You need to complete: Level ${userEvent.currentLevel} - Task ${userEvent.currentTask}\n\n` +
-            `Complete the current task first!`
-        );
+    } catch (err) {
+        console.error('QR scan error:', err);
+        showScanError(err.message);
     }
 }
 
@@ -97,151 +89,109 @@ function showScanError(message) {
     const resultDiv = document.getElementById('scanResult');
     resultDiv.className = 'scan-result error show';
     resultDiv.innerHTML = `<strong>⚠️ ${message}</strong>`;
-    setTimeout(() => {
-        resultDiv.classList.remove('show');
-    }, 5000);
+    setTimeout(() => resultDiv.classList.remove('show'), 5000);
 }
 
 function showTask(event, userEvent, levelNumber, taskNumber) {
-    const level = event.levels.find(l => l.levelNumber === levelNumber);
+    const level = event.levels.find(l => l.level_number === levelNumber);
     if (!level) return;
 
-    const task = level.tasks[taskNumber - 1];
+    const task = level.tasks.find(t => t.task_number === taskNumber);
     if (!task) return;
 
     window.currentTask = { task, level, userEvent, event };
 
     const modal = document.getElementById('taskModal');
     const taskDetails = document.getElementById('taskDetails');
-    const taskForm = document.getElementById('taskForm');
-
-    document.getElementById('currentLevel').textContent = levelNumber;
-    document.getElementById('currentTask').textContent = taskNumber;
-
     taskDetails.innerHTML = `
         <div class="task-question">
             <h4>${task.question}</h4>
+        </div>
     `;
 
     if (task.type === 'mcq') {
         taskDetails.innerHTML += `
             <div class="mcq-options">
-                ${task.options.map((option, index) => `
-                    <label class="mcq-option">
-                        <input type="radio" name="mcq-answer" value="${index}">
-                        ${option}
+                ${task.options.map((opt, i) => `
+                    <label>
+                        <input type="radio" name="mcq-answer" value="${i}"> ${opt}
                     </label>
                 `).join('')}
             </div>
         `;
-    } else if (task.type === 'image') {
-        taskDetails.innerHTML += `
-            <div class="form-group">
-                <label for="imageUpload">Upload Image:</label>
-                <input type="file" id="imageUpload" accept="image/*">
-            </div>
-        `;
     } else if (task.type === 'text') {
         taskDetails.innerHTML += `
-            <div class="form-group">
-                <label for="textAnswer">Your Answer:</label>
-                <input type="text" id="textAnswer" placeholder="Enter your answer">
+            <div>
+                <input type="text" id="textAnswer" placeholder="Your answer">
+            </div>
+        `;
+    } else if (task.type === 'image') {
+        taskDetails.innerHTML += `
+            <div>
+                <input type="file" id="imageUpload" accept="image/*">
             </div>
         `;
     }
 
-    taskDetails.innerHTML += '</div>';
-
     if (task.hint) {
         taskDetails.innerHTML += `
-            <button class="hint-button" onclick="showHint('${task.hint}')">💡 Show Hint</button>
-            <div class="task-hint" id="hintBox">
-                <div class="hint-title">Hint for next QR location:</div>
+            <button onclick="showHint('${task.hint}')">💡 Show Hint</button>
+            <div id="hintBox" class="task-hint">
                 <div id="hintContent"></div>
             </div>
         `;
     }
+
+    document.getElementById('currentLevel').textContent = levelNumber;
+    document.getElementById('currentTask').textContent = taskNumber;
 
     modal.classList.add('active');
 }
 
 function showHint(hint) {
     const hintBox = document.getElementById('hintBox');
-    const hintContent = document.getElementById('hintContent');
-    hintContent.textContent = hint;
+    document.getElementById('hintContent').textContent = hint;
     hintBox.classList.add('show');
 }
 
-function submitTask() {
-    const currentTask = window.currentTask;
-    if (!currentTask) return;
+async function submitTask() {
+    const currentTaskObj = window.currentTask;
+    if (!currentTaskObj) return;
 
-    const { task, level, userEvent, event } = currentTask;
-    let isCorrect = false;
+    const { task, level, userEvent, event } = currentTaskObj;
+    let answer = null;
 
     if (task.type === 'mcq') {
         const selected = document.querySelector('input[name="mcq-answer"]:checked');
-        if (!selected) {
-            alert('Please select an option');
-            return;
-        }
-        isCorrect = parseInt(selected.value) === task.correctOption;
+        if (!selected) return alert('Please select an option');
+        answer = parseInt(selected.value);
     } else if (task.type === 'text') {
-        const answer = document.getElementById('textAnswer').value.trim();
-        const correctAnswer = task.caseSensitive ? task.correctAnswer : task.correctAnswer.toLowerCase();
-        const userAnswer = task.caseSensitive ? answer : answer.toLowerCase();
-        isCorrect = userAnswer === correctAnswer;
+        answer = document.getElementById('textAnswer').value.trim();
     } else if (task.type === 'image') {
-        // For demo, accept any image
         const fileInput = document.getElementById('imageUpload');
-        isCorrect = fileInput.files.length > 0;
+        if (fileInput.files.length === 0) return alert('Please upload an image');
+        answer = 'image_uploaded'; // API can handle the file separately
     }
 
-    if (isCorrect) {
-        // Mark task as completed
-        userEvent.completedTasks.push({ level: level.levelNumber, task: task.taskNumber });
+    try {
+        const submitResp = await api.submitAnswer(task.id, level.id, event.id, answer);
+        if (!submitResp.success) throw new Error(submitResp.message);
 
-        // Move to next task
-        const currentLevelTasks = level.tasks.length;
-        if (userEvent.currentTask < currentLevelTasks) {
-            userEvent.currentTask++;
-            userEvent.status = 'in-progress';
-        } else {
-            // Move to next level
-            if (userEvent.currentLevel < event.levels.length) {
-                userEvent.currentLevel++;
-                userEvent.currentTask = 1;
-                userEvent.status = 'in-progress';
-            } else {
-                // Event completed
-                userEvent.status = 'completed';
-                userEvent.completedAt = new Date().toISOString();
-            }
-        }
-
-        const userEvents = StorageManager.get('userEvents') || [];
-        const index = userEvents.findIndex(ue => ue.id === userEvent.id);
-        if (index >= 0) {
-            userEvents[index] = userEvent;
-            StorageManager.set('userEvents', userEvents);
-        }
-
-        alert('✓ Correct Answer! Moving to next task.');
+        alert('✓ Task submitted successfully!');
         closeModal();
-        loadMyEvents();
-        loadProgress();
+        await loadMyEvents();
+        await loadProgress();
 
-        if (qrScanner && !scannerActive) {
-            initializeScanner();
-        }
-    } else {
-        alert('❌ Incorrect answer. Try again!');
+        if (qrScanner && !scannerActive) initializeScanner();
+    } catch (err) {
+        console.error('Submit task error:', err);
+        alert('❌ Failed to submit task: ' + err.message);
     }
 }
 
-// Scanner section observer
+// Observer to start scanner when scan section becomes active
 window.addEventListener('DOMContentLoaded', () => {
-    const observer = new MutationObserver((mutations) => {
+    const observer = new MutationObserver(() => {
         const scanSection = document.getElementById('scan-qr');
         if (scanSection.classList.contains('active') && !scannerActive) {
             initializeScanner();

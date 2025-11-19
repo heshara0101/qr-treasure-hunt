@@ -1,14 +1,17 @@
-// Admin Main Dashboard Functions
+// Admin Dashboard JS using APIClient
 
 // Check if admin is logged in
-window.addEventListener('DOMContentLoaded', () => {
-    if (!AuthManager.isLoggedIn() || !AuthManager.isAdmin()) {
+window.addEventListener('DOMContentLoaded', async () => {
+    const userResponse = await api.getUser();
+
+    if (!userResponse.success || !userResponse.data || userResponse.data.role !== 'admin') {
         window.location.href = '../login.html';
+        return;
     }
 
     // Set admin name
-    const user = AuthManager.getCurrentUser();
-    document.getElementById('adminUser').textContent = user.fullname || 'Admin';
+    const user = userResponse.data;
+    document.getElementById('adminUser').textContent = user.name || 'Admin';
 
     // Initialize dashboard
     loadDashboard();
@@ -17,14 +20,10 @@ window.addEventListener('DOMContentLoaded', () => {
 // Section Navigation
 function showSection(sectionId) {
     // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-    });
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
 
     // Remove active from all menu items
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.classList.remove('active');
-    });
+    document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
 
     // Show selected section
     document.getElementById(sectionId).classList.add('active');
@@ -34,46 +33,61 @@ function showSection(sectionId) {
 }
 
 // Load Dashboard Data
-function loadDashboard() {
-    const users = StorageManager.get('users') || [];
-    const events = StorageManager.get('events') || [];
-    const userEvents = StorageManager.get('userEvents') || [];
+async function loadDashboard() {
+    try {
+        // Fetch data from API
+        const usersResponse = await api.getAllUsers();
+        const eventsResponse = await api.listEvents();
 
-    // Update stats
-    document.getElementById('totalUsers').textContent = users.length;
-    document.getElementById('totalEvents').textContent = events.length;
+        const users = usersResponse.success ? usersResponse.data : [];
+        const events = eventsResponse.success ? eventsResponse.data : [];
 
-    const ongoingTrials = userEvents.filter(e => e.status === 'in-progress').length;
-    const completedTrials = userEvents.filter(e => e.status === 'completed').length;
+        // Stats
+        document.getElementById('totalUsers').textContent = users.length;
+        document.getElementById('totalEvents').textContent = events.length;
 
-    document.getElementById('ongoingTrials').textContent = ongoingTrials;
-    document.getElementById('completedTrials').textContent = completedTrials;
+        // Fetch recent activities for user-events
+        let userEvents = [];
+        for (let event of events) {
+            const results = await api.getEventResults(event.id);
+            if (results.success && results.data) {
+                userEvents = userEvents.concat(results.data);
+            }
+        }
 
-    // Load recent activity
-    loadRecentActivity();
+        const ongoingTrials = userEvents.filter(e => e.status === 'in-progress').length;
+        const completedTrials = userEvents.filter(e => e.status === 'completed').length;
+
+        document.getElementById('ongoingTrials').textContent = ongoingTrials;
+        document.getElementById('completedTrials').textContent = completedTrials;
+
+        loadRecentActivity(userEvents);
+    } catch (error) {
+        console.error('Dashboard load error:', error);
+    }
 }
 
-function loadRecentActivity() {
-    const userEvents = StorageManager.get('userEvents') || [];
+// Load recent activity
+function loadRecentActivity(userEvents) {
     const activityList = document.getElementById('activityList');
     activityList.innerHTML = '';
 
-    // Get last 10 activities
-    const recentActivities = userEvents.slice(-10).reverse();
-
-    if (recentActivities.length === 0) {
+    if (!userEvents || userEvents.length === 0) {
         activityList.innerHTML = '<p>No activity yet</p>';
         return;
     }
+
+    // Get last 10 activities
+    const recentActivities = userEvents.slice(-10).reverse();
 
     recentActivities.forEach(activity => {
         const activityDiv = document.createElement('div');
         activityDiv.className = 'activity-item';
         activityDiv.innerHTML = `
             <div>
-                <strong>${activity.userName}</strong> started <strong>${activity.eventName}</strong>
+                <strong>${activity.user_name}</strong> started <strong>${activity.event_name}</strong>
             </div>
-            <span class="activity-time">${new Date(activity.startedAt).toLocaleDateString()}</span>
+            <span class="activity-time">${new Date(activity.started_at).toLocaleDateString()}</span>
         `;
         activityList.appendChild(activityDiv);
     });
@@ -81,9 +95,7 @@ function loadRecentActivity() {
 
 // Modal Functions
 function closeModal() {
-    document.querySelectorAll('.modal').forEach(modal => {
-        modal.classList.remove('active');
-    });
+    document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
 }
 
 // Generic Modal Opener
@@ -91,4 +103,4 @@ window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
         event.target.classList.remove('active');
     }
-}
+};

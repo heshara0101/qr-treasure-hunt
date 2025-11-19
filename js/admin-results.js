@@ -1,190 +1,113 @@
 // Admin Results & Progress Tracking
 
-function loadEventResults() {
-    const events = StorageManager.get('events') || [];
-    const userEvents = StorageManager.get('userEvents') || [];
-    const users = StorageManager.get('users') || [];
-    
-    const selectedEventId = document.getElementById('resultEvent').value;
-    const tbody = document.getElementById('resultsTableBody');
-    tbody.innerHTML = '';
+async function loadEventResults() {
+    try {
+        const eventsRes = await api.listEvents();
+        const events = eventsRes.data || [];
 
-    // Filter results based on selected event
-    let results = userEvents;
-    if (selectedEventId) {
-        results = results.filter(ue => ue.eventId === selectedEventId);
-    }
+        const eventSelect = document.getElementById('resultEvent');
+        eventSelect.innerHTML = '<option value="">Select Event</option>';
+        events.forEach(evt => {
+            const option = document.createElement('option');
+            option.value = evt.id;
+            option.textContent = evt.title;
+            eventSelect.appendChild(option);
+        });
 
-    if (results.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No results yet</td></tr>';
-        return;
-    }
+        const selectedEventId = eventSelect.value;
+        const tbody = document.getElementById('resultsTableBody');
+        tbody.innerHTML = '';
 
-    results.forEach(result => {
-        const user = users.find(u => u.id === result.userId);
-        const event = events.find(e => e.id === result.eventId);
+        if (!selectedEventId) return;
 
-        if (!user || !event) return;
+        const resultsRes = await api.getEventResults(selectedEventId);
+        const results = resultsRes.data || [];
 
-        const completionPercent = calculateCompletion(result, event);
-        const statusBadge = getStatusBadge(result.status);
+        if (results.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">No results yet</td></tr>';
+            return;
+        }
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${user.fullname}</td>
-            <td>${event.name}</td>
-            <td>Level ${result.currentLevel}</td>
-            <td>Task ${result.currentTask}</td>
-            <td>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <div style="flex: 1; background: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden;">
-                        <div class="progress-fill" style="width: ${completionPercent}%; background: ${getProgressColor(result.status)};"></div>
+        results.forEach(res => {
+            const row = document.createElement('tr');
+            const completionPercent = Math.round((res.completedTasks / res.totalTasks) * 100);
+
+            row.innerHTML = `
+                <td>${res.user_fullname}</td>
+                <td>${res.event_title}</td>
+                <td>Level ${res.currentLevel}</td>
+                <td>Task ${res.currentTask}</td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <div style="flex:1; background:var(--border-color); height:8px; border-radius:4px; overflow:hidden;">
+                            <div class="progress-fill" style="width:${completionPercent}%; background:${getProgressColor(res.status)};"></div>
+                        </div>
+                        <span>${completionPercent}%</span>
                     </div>
-                    <span>${completionPercent}%</span>
-                </div>
-            </td>
-            <td>${statusBadge}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn view-btn" onclick="viewUserResult('${result.id}')">View</button>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function calculateCompletion(userEvent, event) {
-    if (!event.levels || event.levels.length === 0) return 0;
-
-    const totalTasks = event.levels.reduce((sum, level) => sum + (level.tasks ? level.tasks.length : 0), 0);
-    const completedLevel = userEvent.currentLevel - 1;
-    const tasksInCurrentLevel = event.levels[completedLevel]?.tasks?.length || 0;
-
-    let completedTasks = 0;
-    for (let i = 0; i < completedLevel; i++) {
-        completedTasks += event.levels[i]?.tasks?.length || 0;
+                </td>
+                <td>${getStatusBadge(res.status)}</td>
+                <td>
+                    <button class="action-btn view-btn" onclick="viewUserResult('${res.user_event_id}')">View</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error(error);
+        document.getElementById('resultsTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center">Failed to load results</td></tr>';
     }
-    completedTasks += Math.min(userEvent.currentTask - 1, tasksInCurrentLevel);
-
-    return Math.round((completedTasks / totalTasks) * 100);
 }
 
 function getProgressColor(status) {
     switch(status) {
-        case 'completed':
-            return 'var(--success-color)';
-        case 'in-progress':
-            return 'var(--warning-color)';
-        case 'wrong-qr':
-            return 'var(--danger-color)';
-        default:
-            return 'var(--text-light)';
+        case 'completed': return 'var(--success-color)';
+        case 'in-progress': return 'var(--warning-color)';
+        case 'wrong-qr': return 'var(--danger-color)';
+        default: return 'var(--text-light)';
     }
 }
 
 function getStatusBadge(status) {
-    const statusMap = {
+    const map = {
         'completed': '<span class="status-badge status-completed">Completed</span>',
         'in-progress': '<span class="status-badge status-pending">In Progress</span>',
-        'wrong-qr': '<span class="status-badge" style="background: #fee2e2; color: #991b1b;">Wrong QR</span>'
+        'wrong-qr': '<span class="status-badge" style="background:#fee2e2;color:#991b1b;">Wrong QR</span>'
     };
-    return statusMap[status] || '<span class="status-badge">Unknown</span>';
+    return map[status] || '<span class="status-badge">Unknown</span>';
 }
 
-function viewUserResult(userEventId) {
-    const userEvents = StorageManager.get('userEvents') || [];
-    const events = StorageManager.get('events') || [];
-    const users = StorageManager.get('users') || [];
+async function viewUserResult(userEventId) {
+    try {
+        const res = await api.request(`admin.php?action=get-user-event-detail&user_event_id=${userEventId}`);
+        const data = res.data;
+        if (!data) return;
 
-    const userEvent = userEvents.find(ue => ue.id === userEventId);
-    if (!userEvent) return;
+        const modal = document.getElementById('userResultModal');
+        const modalBody = document.getElementById('userResultBody');
 
-    const user = users.find(u => u.id === userEvent.userId);
-    const event = events.find(e => e.id === userEvent.eventId);
+        const completionPercent = Math.round((data.completedTasks / data.totalTasks) * 100);
 
-    const modal = document.getElementById('userResultModal');
-    const resultBody = document.getElementById('userResultBody');
-
-    const completionPercent = calculateCompletion(userEvent, event);
-
-    let resultHTML = `
-        <div class="results-detail">
-            <div class="result-item">
-                <span class="result-label">User:</span>
-                <span class="result-value">${user.fullname}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Event:</span>
-                <span class="result-value">${event.name}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Status:</span>
-                <span class="result-value">${getStatusBadge(userEvent.status)}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Current Level:</span>
-                <span class="result-value">Level ${userEvent.currentLevel} - Task ${userEvent.currentTask}</span>
-            </div>
-            <div class="result-item">
-                <span class="result-label">Completion:</span>
-                <span class="result-value">${completionPercent}%</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: ${completionPercent}%; background: ${getProgressColor(userEvent.status)};"></div>
-            </div>
-            <div class="result-item" style="margin-top: 1rem;">
-                <span class="result-label">Started:</span>
-                <span class="result-value">${new Date(userEvent.startedAt).toLocaleDateString()}</span>
-            </div>
-    `;
-
-    if (userEvent.status === 'completed') {
-        resultHTML += `
-            <div class="result-item">
-                <span class="result-label">Completed:</span>
-                <span class="result-value">${new Date(userEvent.completedAt).toLocaleDateString()}</span>
+        let html = `
+            <div class="results-detail">
+                <div class="result-item"><span class="result-label">User:</span><span class="result-value">${data.user_fullname}</span></div>
+                <div class="result-item"><span class="result-label">Event:</span><span class="result-value">${data.event_title}</span></div>
+                <div class="result-item"><span class="result-label">Status:</span><span class="result-value">${getStatusBadge(data.status)}</span></div>
+                <div class="result-item"><span class="result-label">Current Level:</span><span class="result-value">Level ${data.currentLevel} - Task ${data.currentTask}</span></div>
+                <div class="result-item"><span class="result-label">Completion:</span><span class="result-value">${completionPercent}%</span></div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${completionPercent}%; background:${getProgressColor(data.status)};"></div></div>
             </div>
         `;
+
+        modalBody.innerHTML = html;
+        modal.classList.add('active');
+    } catch (error) {
+        console.error(error);
+        alert('Failed to load user result');
     }
-
-    if (userEvent.wrongQRScans && userEvent.wrongQRScans.length > 0) {
-        resultHTML += `
-            <div class="result-item" style="margin-top: 1rem;">
-                <span class="result-label">Wrong QR Scans:</span>
-                <span class="result-value">${userEvent.wrongQRScans.length}</span>
-            </div>
-            <div style="margin-top: 0.5rem; padding: 0.5rem; background: #fee2e2; border-radius: 4px;">
-                <strong style="color: #991b1b;">⚠️ Alert: User attempted to scan incorrect QR codes</strong>
-                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
-        `;
-        
-        userEvent.wrongQRScans.forEach(scan => {
-            resultHTML += `<li>Attempted Level ${scan.attemptedLevel} Task ${scan.attemptedTask} at Level ${userEvent.currentLevel}</li>`;
-        });
-
-        resultHTML += `
-                </ul>
-            </div>
-        `;
-    }
-
-    resultHTML += '</div>';
-    resultBody.innerHTML = resultHTML;
-    modal.classList.add('active');
 }
 
-// Populate event dropdown
-window.addEventListener('DOMContentLoaded', () => {
-    const events = StorageManager.get('events') || [];
-    const eventSelect = document.getElementById('resultEvent');
+// Trigger load on event select change
+document.getElementById('resultEvent').addEventListener('change', loadEventResults);
 
-    events.forEach(event => {
-        const option = document.createElement('option');
-        option.value = event.id;
-        option.textContent = event.name;
-        eventSelect.appendChild(option);
-    });
-
-    loadEventResults();
-});
+// Initial load
+loadEventResults();

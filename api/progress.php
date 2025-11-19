@@ -19,6 +19,9 @@ switch ($action) {
     case 'get-progress':
         handleGetProgress();
         break;
+    case 'get-my-events':
+        handleGetMyEvents();
+        break;
     case 'submit-answer':
         handleSubmitAnswer($input);
         break;
@@ -69,31 +72,64 @@ function handleJoinEvent($input) {
         jsonResponse(false, 'Failed to join event', null, 500);
     }
 }
-
-function handleGetProgress() {
+function handleGetMyEvents() {
     global $db;
-    
+
     $user = getAuthUser();
     if (!$user) {
         jsonResponse(false, 'Unauthorized', null, 401);
     }
-    
-    $event_id = $_GET['event_id'] ?? null;
-    if (!$event_id) {
-        jsonResponse(false, 'Event ID required', null, 400);
-    }
-    
-    $stmt = $db->prepare("SELECT * FROM progress WHERE user_id = ? AND event_id = ?");
-    $stmt->bind_param("ii", $user['id'], $event_id);
+
+    // Get events the user joined
+    $stmt = $db->prepare("
+        SELECT e.*
+        FROM user_events ue
+        JOIN events e ON ue.event_id = e.id
+        WHERE ue.user_id = ?
+        ORDER BY e.created_at DESC
+    ");
+    $stmt->bind_param("i", $user['id']);
     $stmt->execute();
     $result = $stmt->get_result();
-    
-    if ($result->num_rows === 0) {
-        jsonResponse(false, 'Progress not found', null, 404);
+
+    $events = [];
+    while ($row = $result->fetch_assoc()) {
+        $events[] = $row;
     }
-    
-    $progress = $result->fetch_assoc();
-    jsonResponse(true, 'Progress retrieved', $progress);
+
+    jsonResponse(true, 'My events loaded', $events);
+}
+
+function handleGetProgress() {
+    global $db;
+
+    $user = getAuthUser();
+    if (!$user) {
+        jsonResponse(false, 'Unauthorized', null, 401);
+    }
+
+    // Get all progress related to the current user
+    $stmt = $db->prepare("
+        SELECT * FROM progress 
+        WHERE user_id = ?
+        ORDER BY updated_at DESC
+    ");
+    $stmt->bind_param("i", $user['id']);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    $progressList = [];
+
+    while ($row = $result->fetch_assoc()) {
+        $progressList[] = $row;
+    }
+
+    if (empty($progressList)) {
+        jsonResponse(false, 'No progress data found', []);
+    }
+
+    jsonResponse(true, 'Progress list retrieved', $progressList);
 }
 
 function handleSubmitAnswer($input) {

@@ -65,37 +65,32 @@ function handleCreateEvent($input) {
     }
 }
 
+
 function handleListEvents() {
     global $db;
-    
+
     $user = getAuthUser();
     if (!$user) {
         jsonResponse(false, 'Unauthorized', null, 401);
     }
-    
-    if ($user['role'] === 'admin') {
-        // Admin sees their events
-        $stmt = $db->prepare("SELECT * FROM events WHERE admin_id = ? ORDER BY created_at DESC");
-        $stmt->bind_param("i", $user['id']);
-    } else {
-        // Users see joined events
-        $stmt = $db->prepare("
-            SELECT e.* FROM events e
-            INNER JOIN user_events ue ON e.id = ue.event_id
-            WHERE ue.user_id = ?
-            ORDER BY e.created_at DESC
-        ");
-        $stmt->bind_param("i", $user['id']);
-    }
-    
+
+    // Everyone sees the same event list
+    $stmt = $db->prepare("
+        SELECT e.*,
+            (SELECT COUNT(*) FROM user_events ue WHERE ue.event_id = e.id) AS total_joined
+        FROM events e
+        ORDER BY e.created_at DESC
+    ");
+
     $stmt->execute();
     $result = $stmt->get_result();
+
     $events = [];
-    
+
     while ($row = $result->fetch_assoc()) {
         $events[] = $row;
     }
-    
+
     jsonResponse(true, 'Events retrieved', $events);
 }
 

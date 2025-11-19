@@ -8,7 +8,11 @@ class StorageManager {
 
     static get(key) {
         const value = localStorage.getItem(key);
-        return value ? JSON.parse(value) : null;
+        try {
+            return JSON.parse(value);
+        } catch {
+            return value; // return raw string (token)
+        }
     }
 
     static remove(key) {
@@ -21,12 +25,12 @@ class StorageManager {
 }
 
 class AuthManager {
-    static async register(fullname, email, phone, password, confirmPassword) {
+    static async register(name, email, phone, password, confirmPassword) {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/register-user`, {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fullname, email, phone, password, confirmPassword })
+                body: JSON.stringify({ name, email, phone, password, confirmPassword })
             });
 
             const data = await response.json();
@@ -71,23 +75,34 @@ class AuthManager {
         }
     }
 
-    static async logout() {
+    static async getProfile() {
         try {
-            const token = StorageManager.get('token');
-            if (token) {
-                await fetch(`${API_BASE_URL}/auth/logout`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
+            const token = this.getToken();
+            if (!token) {
+                throw new Error("No token found. User not logged in.");
             }
+
+            const response = await fetch(`${API_BASE_URL}/auth/get-user`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Failed to fetch profile");
+            }
+
+            // Update stored user data
+            StorageManager.set("currentUser", data.user);
+
+            return { success: true, user: data.user };
+
         } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            StorageManager.remove('token');
-            StorageManager.remove('currentUser');
-            window.location.href = '/index.html';
+            console.error("Get profile error:", error);
+            return { success: false, error: error.message };
         }
     }
 
@@ -123,6 +138,7 @@ class AuthManager {
 }
 
 class APIManager {
+    
     // EVENTS
     static async createEvent(name, description) {
         try {

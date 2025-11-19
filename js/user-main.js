@@ -9,7 +9,6 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userName').textContent = user.fullname || 'User';
 
     // Load initial data
-    loadAvailableEvents();
     loadMyEvents();
     loadProgress();
     loadProfile();
@@ -26,8 +25,4 @@ function showSection(sectionId) {
 
     document.getElementById(sectionId).classList.add('active');
     document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
-}
-
-function logout() {
-    AuthManager.logout();
 }
