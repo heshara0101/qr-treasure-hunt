@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Treasure Hunt - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-container">
+            <div class="logo">🗺️ QR Treasure Hunt</div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="#" class="nav-link" onclick="goToLogin()">Login</a>
+                <a href="#" class="nav-link" onclick="goToRegister()">Register</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="hero">
+        <div class="hero-content">
+            <h1>QR Treasure Hunt</h1>
+            <p>An exciting adventure through QR codes and puzzles!</p>
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="goToRegister()">Get Started</button>
+                <button class="btn btn-secondary" onclick="goToLogin()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Multiple Question Types</h3>
+            <p>MCQ, Image Upload, Text Input - Various ways to solve puzzles</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📍</div>
+            <h3>Level-Based Challenges</h3>
+            <p>Progress through levels with hints and QR code verification</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <h3>Event Management</h3>
+            <p>Admins create events and track user progress in real-time</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Results Tracking</h3>
+            <p>Detailed analytics on user performance and completion status</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 QR Treasure Hunt. All rights reserved.</p>
+    </footer>
+
+    <script src="js/php-api.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
