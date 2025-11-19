@@ -4,12 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard - QR Treasure Hunt</title>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/user.css">
 </head>
 <body>
+<<<<<<< HEAD
     <!-- Top Navbar -->
+=======
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     <div class="navbar user-navbar">
         <div class="nav-container">
             <div class="logo">🗺️ QR Treasure Hunt</div>
@@ -21,6 +27,7 @@
     </div>
 
     <div class="user-container">
+<<<<<<< HEAD
         <!-- Sidebar -->
         <aside class="sidebar">
             <ul class="sidebar-menu">
@@ -116,6 +123,56 @@
                 <form id="profileForm"
                       onsubmit="handleProfileUpdate(event)"
                       class="profile-form">
+=======
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showSection('events')" class="menu-item active" data-section="events">📅 Available Events</a></li>
+                <li><a href="#" onclick="showSection('my-events')" class="menu-item" data-section="my-events">🎯 My Events</a></li>
+                <li><a href="#" onclick="showSection('scan-qr')" class="menu-item" data-section="scan-qr">📱 Scan QR Code</a></li>
+                <li><a href="#" onclick="showSection('progress')" class="menu-item" data-section="progress">📊 My Progress</a></li>
+                <li><a href="#" onclick="showSection('profile')" class="menu-item" data-section="profile">👤 My Profile</a></li>
+            </ul>
+        </aside>
+
+        <main class="user-content">
+            <!-- Available Events Section -->
+            <section id="events" class="section active">
+                <h2>Available Events</h2>
+                <div class="events-grid" id="eventsGrid">
+                    <!-- Events will be loaded here -->
+                </div>
+            </section>
+
+            <!-- My Events Section -->
+            <section id="my-events" class="section">
+                <h2>My Events</h2>
+                <div class="my-events-list" id="myEventsList">
+                    <!-- User's events will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Scan QR Code Section -->
+            <section id="scan-qr" class="section">
+                <h2>Scan QR Code</h2>
+                <div class="scan-container">
+                    <div id="reader" style="width: 100%; max-width: 500px;"></div>
+                    <div id="scanResult" class="scan-result"></div>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section id="progress" class="section">
+                <h2>My Progress</h2>
+                <div id="progressContainer" class="progress-container">
+                    <!-- Progress data will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section">
+                <h2>My Profile</h2>
+                <form id="profileForm" onsubmit="handleProfileUpdate(event)" class="profile-form">
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
                     <div class="form-group">
                         <label for="profileName">Full Name:</label>
                         <input type="text" id="profileName">
@@ -128,9 +185,13 @@
                         <label for="profilePhone">Phone:</label>
                         <input type="tel" id="profilePhone">
                     </div>
+<<<<<<< HEAD
                     <button type="submit" class="btn btn-primary">
                         Update Profile
                     </button>
+=======
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
                 </form>
             </section>
         </main>
@@ -140,20 +201,31 @@
     <div id="eventDetailsModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
+<<<<<<< HEAD
             <h2 id="eventTitle">Event Title</h2>
+=======
+            <h2 id="eventTitle">Event Details</h2>
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
             <div id="eventDetailsBody"></div>
             <button class="btn btn-primary" onclick="joinEvent()">Join Event</button>
         </div>
     </div>
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     <!-- Task Modal -->
     <div id="taskModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
+<<<<<<< HEAD
             <h2 id="taskTitle">
                 Level <span id="currentLevel">1</span> - Task <span id="currentTask">1</span>
             </h2>
+=======
+            <h2 id="taskTitle">Level <span id="currentLevel">1</span> - Task <span id="currentTask">1</span></h2>
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
             <div id="taskDetails"></div>
             <div id="taskForm"></div>
             <button class="btn btn-primary" onclick="submitTask()">Submit Answer</button>
@@ -164,10 +236,16 @@
         <p>&copy; 2025 QR Treasure Hunt. All rights reserved.</p>
     </footer>
 
+<<<<<<< HEAD
     <!-- QR library (must be BEFORE user-scanner.js) -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <!-- Your JS files -->
+=======
+    <!-- QR Code Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     <script src="../js/php-api.js"></script>
     <script src="../js/api.js"></script>
     <script src="../js/auth.js"></script>
@@ -175,6 +253,7 @@
     <script src="../js/user-events.js"></script>
     <script src="../js/user-scanner.js"></script>
     <script src="../js/user-progress.js"></script>
+<<<<<<< HEAD
     
 
     <!-- Simple showSection if you don't already have it -->
@@ -191,5 +270,7 @@
             });
         }
     </script>
+=======
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
 </body>
 </html>

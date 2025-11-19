@@ -95,6 +95,7 @@ async function joinEvent() {
     try {
         const res = await api.joinEvent(eventId);
         if (res.success) {
+<<<<<<< HEAD
         alert('Event joined successfully!');
 
         // Close modal
@@ -119,6 +120,15 @@ async function joinEvent() {
         alert(res.message || 'Failed to join event');
     }
 
+=======
+            alert('Event joined successfully!');
+            closeModal();
+            await loadAvailableEvents();
+            await loadMyEvents();
+        } else {
+            alert(res.message || 'Failed to join event');
+        }
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     } catch (error) {
         console.error('Join event error:', error);
         alert('Failed to join event');

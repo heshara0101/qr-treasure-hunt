@@ -153,6 +153,7 @@ function renderTaskOptions(levelNumber, taskCount, type) {
                 <label><input type="checkbox" id="caseSensitive-${levelNumber}-${taskCount}"> Case Sensitive</label>
             </div>`;
     }
+<<<<<<< HEAD
 
     // Add QR input field for manual entry
     optionsContainer.innerHTML += `
@@ -164,6 +165,10 @@ function renderTaskOptions(levelNumber, taskCount, type) {
 }
 
 
+=======
+}
+
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
 // --------------------
 // Submit Event
 // --------------------
@@ -178,21 +183,31 @@ async function handleCreateEvent(e) {
         const eventResp = await api.createEvent(eventName, eventDescription);
         const eventId = eventResp.data.id;
 
+<<<<<<< HEAD
         for (let i = 1; i <= levelCount; i++) {
+=======
+        for(let i = 1; i <= levelCount; i++){
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
             const levelName = document.getElementById(`levelName-${i}`).value || `Level ${i}`;
             const levelDescription = document.getElementById(`levelDescription-${i}`).value;
 
             const levelResp = await api.addLevel(eventId, i, levelName, levelDescription);
 
             const taskDivs = document.querySelectorAll(`#tasks-${i} .task-item`);
+<<<<<<< HEAD
             for (let j = 0; j < taskDivs.length; j++) {
                 const taskNumber = j + 1;
+=======
+            for(let j=0; j<taskDivs.length; j++){
+                const taskNumber = j+1;
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
                 const taskType = selectedTaskTypes[`${i}-${taskNumber}`] || 'mcq';
                 const question = document.getElementById(`taskQuestion-${i}-${taskNumber}`).value;
                 const hint = document.getElementById(`taskHint-${i}-${taskNumber}`).value;
 
                 let options = [];
                 let correctAnswer = null;
+<<<<<<< HEAD
 
                 // Use only manual QR, required
                 const manualQrInput = document.getElementById(`taskQr-${i}-${taskNumber}`).value.trim();
@@ -206,11 +221,22 @@ async function handleCreateEvent(e) {
                     options = Array.from(taskDivs[j].querySelectorAll('.mcq-input')).map(input => input.value);
                     correctAnswer = parseInt(taskDivs[j].querySelector(`input[name="correct-${i}-${taskNumber}"]:checked`).value);
                 } else if (taskType === 'text') {
+=======
+                const qrValue = JSON.stringify({ event: eventName, level: i, task: taskNumber, timestamp: Date.now() });
+
+                if(taskType === 'mcq'){
+                    options = Array.from(taskDivs[j].querySelectorAll('.mcq-input')).map(input=>input.value);
+                    correctAnswer = parseInt(taskDivs[j].querySelector(`input[name="correct-${i}-${taskNumber}"]:checked`).value);
+                } else if(taskType === 'text'){
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
                     correctAnswer = document.getElementById(`textAnswer-${i}-${taskNumber}`).value;
                 }
 
                 await api.addTask(levelResp.data.id, taskNumber, taskType, question, options, correctAnswer, qrValue, hint);
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
             }
         }
 
@@ -220,13 +246,20 @@ async function handleCreateEvent(e) {
         showSection('events');
         await loadEvents();
 
+<<<<<<< HEAD
     } catch (err) {
+=======
+    } catch(err){
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
         console.error(err);
         alert('Failed to create event. Check console for details.');
     }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
 // --------------------
 // Load Events
 // --------------------
