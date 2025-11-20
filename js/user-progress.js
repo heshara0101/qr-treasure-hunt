@@ -86,7 +86,6 @@ async function loadProgress() {
     }
 }
 
-
 async function loadProfile() {
     try {
         const response = await api.getUser();

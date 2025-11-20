@@ -76,19 +76,16 @@ async function viewUserDetails(userId) {
                 <div class="result-item"><span class="result-label">Phone:</span><span class="result-value">${user.phone || '-'}</span></div>
                 <div class="result-item"><span class="result-label">Registered:</span><span class="result-value">${new Date(user.created_at).toLocaleDateString()}</span></div>
                 <div class="result-item"><span class="result-label">Events Joined:</span><span class="result-value">${user.events?.length || 0}</span></div>
-
                 ${participationHTML}
             </div>
         `;
 
         modal.classList.add('active');
-
     } catch (error) {
         console.error(error);
         alert('Failed to load user details');
     }
 }
-
 
 async function deleteUser(userId) {
     if (!confirm('Are you sure you want to remove this user?')) return;
