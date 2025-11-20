@@ -67,5 +67,20 @@
 
     <script src="js/php-api.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.createElement('div');
+        toggle.classList.add('nav-toggle');
+        toggle.innerHTML = '<span></span><span></span><span></span>';
+        const navbar = document.querySelector('.nav-container');
+        navbar.appendChild(toggle);
+
+        const navMenu = navbar.querySelector('.nav-menu');
+
+        toggle.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+        });
+    });
+    </script>
 </body>
 </html>

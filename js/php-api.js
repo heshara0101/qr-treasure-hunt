@@ -61,6 +61,13 @@ class APIClient {
         });
     }
 
+    async updateProfile(name, phone) {
+        return this.request('auth.php?action=update-profile', 'POST', {
+            name,
+            phone
+        });
+    }
+
     async login(email, password) {
         const result = await this.request('auth.php?action=login', 'POST', {
             email,

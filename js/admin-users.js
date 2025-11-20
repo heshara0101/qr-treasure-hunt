@@ -22,7 +22,6 @@ async function loadUsers() {
                 <td>${user.email}</td>
                 <td>${user.phone || '-'}</td>
                 <td>${registeredDate}</td>
-                <td>--</td>
                 <td><span class="status-badge status-active">Active</span></td>
                 <td>
                     <div class="action-buttons">
@@ -56,14 +55,19 @@ async function viewUserDetails(userId) {
         if (user.events && user.events.length > 0) {
             participationHTML += '<h4>Event Participation:</h4>';
             user.events.forEach(evt => {
-                const status = evt.status === 'completed' ? 'Completed' : 'In Progress';
+                const status = evt.progress_percentage === 100 ? 'Completed' : 'In Progress';
+                const progress = evt.progress_percentage ?? 0;
+
                 participationHTML += `
-                    <div style="margin-left:1rem; padding:0.5rem; background:var(--light-bg); border-radius:4px; margin-bottom:0.5rem;">
-                        <strong>${evt.name}</strong> - ${status}
+                    <div style="margin-left:1rem; padding:0.5rem; background:#f5f5f5; border-radius:4px; margin-bottom:0.5rem;">
+                        <strong>${evt.title}</strong> - ${status} (${progress}%)
                     </div>
                 `;
             });
+        } else {
+            participationHTML = '<p>No events joined yet.</p>';
         }
+
 
         modalBody.innerHTML = `
             <div class="results-detail">
@@ -72,16 +76,19 @@ async function viewUserDetails(userId) {
                 <div class="result-item"><span class="result-label">Phone:</span><span class="result-value">${user.phone || '-'}</span></div>
                 <div class="result-item"><span class="result-label">Registered:</span><span class="result-value">${new Date(user.created_at).toLocaleDateString()}</span></div>
                 <div class="result-item"><span class="result-label">Events Joined:</span><span class="result-value">${user.events?.length || 0}</span></div>
+
                 ${participationHTML}
             </div>
         `;
 
         modal.classList.add('active');
+
     } catch (error) {
         console.error(error);
         alert('Failed to load user details');
     }
 }
+
 
 async function deleteUser(userId) {
     if (!confirm('Are you sure you want to remove this user?')) return;

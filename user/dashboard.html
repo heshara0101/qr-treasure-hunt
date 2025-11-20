@@ -83,26 +83,70 @@
             </section>
 
             <!-- Scan QR -->
-            <section id="scan-qr" class="section">
-                <h2>Scan QR Code</h2>
+            <section id="scan-qr" class="section" style="padding:2rem; max-width:700px; margin:auto;">
+                <h2 style="text-align:center; font-size:1.8rem; margin-bottom:1.5rem; color:#1f2937;">📱 Scan QR Code</h2>
 
-                <div class="scan-container">
-                    <!-- Camera / image preview -->
-                    <div id="reader" style="width: 100%; max-width: 500px;"></div>
+                <div class="scan-container" style="
+                    display:flex; 
+                    flex-direction:column; 
+                    gap:1.5rem;
+                    align-items:center;
+                    background:#f9fafb;
+                    padding:1.5rem;
+                    border-radius:12px;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                ">
+                    <!-- Camera / QR preview -->
+                    <div id="reader" style="
+                        width:100%; 
+                        max-width:480px; 
+                        aspect-ratio:1/1;
+                        border:2px dashed #cbd5e1;
+                        border-radius:12px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:#fff;
+                    ">
+                        <p style="color:#9ca3af; text-align:center;">Camera preview will appear here</p>
+                    </div>
 
-                    <!-- Result / error -->
-                    <div id="scanResult" class="scan-result"></div>
+                    <!-- Scan result / error -->
+                    <div id="scanResult" class="scan-result" style="
+                        width:100%;
+                        text-align:center;
+                        font-size:1rem;
+                        color:#111827;
+                        padding:0.75rem 1rem;
+                        border-radius:8px;
+                        background:#f3f4f6;
+                        min-height:2rem;
+                    "></div>
 
-                    <!-- Upload QR image option -->
-                    <div class="qr-upload">
-                        <p>Or upload a QR code image:</p>
+                    <!-- Upload QR image -->
+                    <div class="qr-upload" style="width:100%; text-align:center;">
+                        <p style="margin-bottom:0.5rem; color:#6b7280;">Or upload a QR code image:</p>
+                        <label for="qrImageInput" style="
+                            display:inline-block;
+                            padding:0.6rem 1.2rem;
+                            background:#3b82f6;
+                            color:white;
+                            font-weight:500;
+                            border-radius:8px;
+                            cursor:pointer;
+                            transition: background 0.2s ease;
+                        " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+                            Choose File
+                        </label>
                         <input type="file"
-                               id="qrImageInput"
-                               accept="image/*"
-                               onchange="handleImageUpload(event)">
+                            id="qrImageInput"
+                            accept="image/*"
+                            onchange="handleImageUpload(event)"
+                            style="display:none;">
                     </div>
                 </div>
             </section>
+
 
             <!-- Progress -->
             <section id="progress" class="section">
@@ -190,6 +234,21 @@
                 else a.classList.remove('active');
             });
         }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.createElement('div');
+        toggle.classList.add('nav-toggle');
+        toggle.innerHTML = '<span></span><span></span><span></span>';
+        const navbar = document.querySelector('.nav-container');
+        navbar.appendChild(toggle);
+
+        const navMenu = navbar.querySelector('.nav-menu');
+
+        toggle.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+        });
+    });
     </script>
 </body>
 </html>

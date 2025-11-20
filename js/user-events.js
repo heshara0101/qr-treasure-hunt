@@ -182,7 +182,10 @@ async function loadMyEvents() {
         myEventsList.innerHTML = '';
 
         if (progressList.length === 0) {
-            myEventsList.innerHTML = '<p>You haven\'t joined any events yet. <a href="#" onclick="showSection(\'events\')">Browse events</a></p>';
+            myEventsList.innerHTML = `
+                <p>You haven't joined any events yet. 
+                    <a href="#" onclick="showSection('events')">Browse events</a>
+                </p>`;
             return;
         }
 
@@ -190,45 +193,74 @@ async function loadMyEvents() {
             const event = events.find(e => (e.id || e.event_id) == ue.event_id);
             if (!event) return;
 
-            const totalTasks = event.levels?.reduce((sum, level) => sum + (level.tasks?.length || 0), 0) || 0;
+            const totalTasks = event.levels?.reduce((sum, l) => sum + (l.tasks?.length || 0), 0) || ue.total_tasks || 0;
             const completedTasks = ue.tasks_completed || 0;
             const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
             const item = document.createElement('div');
             item.className = 'my-event-item';
+            item.style.cssText = `
+                background:#fff; 
+                border-radius:12px; 
+                padding:1rem; 
+                margin-bottom:1rem; 
+                box-shadow:0 4px 12px rgba(0,0,0,0.05);
+                display:flex;
+                flex-direction:column;
+                gap:0.8rem;
+                transition:transform 0.2s;
+            `;
+            item.onmouseover = () => item.style.transform = 'translateY(-3px)';
+            item.onmouseout = () => item.style.transform = 'translateY(0)';
+
             item.innerHTML = `
                 <div class="event-info-section">
-                    <h3>${event.title}</h3>
-                    <p>${event.description}</p>
-                    <button class="btn btn-primary" onclick="continueEvent('${ue.id || ue.event_id}')">
+                    <h3 style="margin-bottom:0.25rem; color:#1f2937;">${event.title}</h3>
+                    <p style="color:#4b5563; font-size:0.95rem;">${event.description}</p>
+                    <button class="btn btn-primary" style="
+                        margin-top:0.5rem;
+                        padding:0.4rem 0.9rem;
+                        background:#3b82f6;
+                        color:white;
+                        border:none;
+                        border-radius:6px;
+                        cursor:pointer;
+                        font-weight:500;
+                        transition: background 0.2s;
+                    " 
+                    onmouseover="this.style.background='#2563eb'" 
+                    onmouseout="this.style.background='#3b82f6'" 
+                    onclick="continueEvent('${ue.id || ue.event_id}')">
                         ${ue.progress_percentage === 100 ? 'View Results' : 'Continue'}
                     </button>
                 </div>
-                <div class="progress-section">
-                    <div class="progress-stat">
-                        <span class="progress-stat-label">Status:</span>
-                        <span class="progress-stat-value">${ue.progress_percentage === 100 ? '✓ Completed' : '⏳ In Progress'}</span>
+
+                <div class="progress-section" style="margin-top:0.5rem;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#374151;">
+                        <div>Status: ${ue.progress_percentage === 100 ? '✓ Completed' : '⏳ In Progress'}</div>
+                        <div>Level: ${ue.current_level || 1}/${event.levels?.length || 1}</div>
+                        <div>Completion: ${completionPercent}%</div>
                     </div>
-                    <div class="progress-stat">
-                        <span class="progress-stat-label">Current Level:</span>
-                        <span class="progress-stat-value">${ue.current_level}/${event.levels?.length || 0}</span>
-                    </div>
-                    <div class="progress-stat">
-                        <span class="progress-stat-label">Completion:</span>
-                        <span class="progress-stat-value">${completionPercent}%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${completionPercent}%;"></div>
+                    <div style="background:#e5e7eb; border-radius:6px; height:10px; margin-top:0.3rem; overflow:hidden;">
+                        <div style="
+                            width:${completionPercent}%;
+                            background:#4caf50;
+                            height:100%;
+                            transition: width 0.5s ease-in-out;
+                        "></div>
                     </div>
                 </div>
             `;
+
             myEventsList.appendChild(item);
         });
 
     } catch (error) {
         console.error('Load my events error:', error);
+        document.getElementById('myEventsList').innerHTML = `<p style="color:red;">Failed to load events: ${error.message}</p>`;
     }
 }
+
 
 // -------------------- Continue Event --------------------
 function continueEvent(userEventId) {

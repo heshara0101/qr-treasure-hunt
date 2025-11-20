@@ -122,7 +122,6 @@
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Registered</th>
-                                <th>Events Joined</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -149,9 +148,9 @@
                         <thead>
                             <tr>
                                 <th>User Name</th>
-                                <th>Event</th>
-                                <th>Current Level</th>
-                                <th>Current Task</th>
+                                <th>Email</th>
+                                <th>Complete Task</th>
+                                <th>Total Task</th>
                                 <th>Completion %</th>
                             </tr>
                         </thead>
@@ -208,5 +207,20 @@
     <script src="../js/admin-events.js"></script>
     <script src="../js/admin-users.js"></script>
     <script src="../js/admin-results.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.createElement('div');
+        toggle.classList.add('nav-toggle');
+        toggle.innerHTML = '<span></span><span></span><span></span>';
+        const navbar = document.querySelector('.nav-container');
+        navbar.appendChild(toggle);
+
+        const navMenu = navbar.querySelector('.nav-menu');
+
+        toggle.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+        });
+    });
+    </script>
 </body>
 </html>

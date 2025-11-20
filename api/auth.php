@@ -16,6 +16,9 @@ switch ($action) {
     case 'register':
         handleRegister($input);
         break;
+    case 'update-profile': 
+        handleUpdateProfile($input);
+        break;
     case 'login':
         handleLogin($input);
         break;
@@ -69,6 +72,43 @@ function handleRegister($input) {
         ]);
     } else {
         jsonResponse(false, 'Registration failed', null, 500);
+    }
+}
+
+function handleUpdateProfile($input) {
+    global $db;
+
+    // Require valid logged-in user (via JWT)
+    $user = getAuthUser();
+
+    if (!$user) {
+        jsonResponse(false, 'Unauthorized', null, 401);
+    }
+
+    $name  = $input['name']  ?? null;
+    $phone = $input['phone'] ?? null;
+
+    // You can make both required; adjust logic if you want them optional
+    if (!$name || !$phone) {
+        jsonResponse(false, 'Name and phone are required', null, 400);
+    }
+
+    $stmt = $db->prepare("UPDATE users SET name = ?, phone = ? WHERE id = ?");
+    $stmt->bind_param("ssi", $name, $phone, $user['id']);
+
+    if ($stmt->execute()) {
+        // Build updated user data to return
+        $updatedUser = [
+            'id'    => $user['id'],
+            'email' => $user['email'],
+            'name'  => $name,
+            'phone' => $phone,
+            'role'  => $user['role']
+        ];
+
+        jsonResponse(true, 'Profile updated successfully', $updatedUser);
+    } else {
+        jsonResponse(false, 'Failed to update profile', null, 500);
     }
 }
 

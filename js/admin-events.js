@@ -172,23 +172,59 @@ function selectTaskType(levelNumber, taskCount, type, event) {
 
 function renderTaskOptions(levelNumber, taskCount, type) {
     const optionsContainer = document.getElementById(`taskOptions-${levelNumber}-${taskCount}`);
-    if (!optionsContainer) return console.error(`Missing options container for task ${levelNumber}-${taskCount}`);
+    if (!optionsContainer) {
+        return console.error(`Missing options container for task ${levelNumber}-${taskCount}`);
+    }
+
+    // Clear existing content
     optionsContainer.innerHTML = '';
 
+    // Helper function to create an element from HTML string
+    function createElement(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html.trim();
+        return div.firstChild;
+    }
+
+    // MCQ type
     if (type === 'mcq') {
-        optionsContainer.innerHTML = `
-            <div class="form-group">
-                <label>MCQ Options</label>
-                <div id="mcqOptions-${levelNumber}-${taskCount}">
-                    ${[0,1,2,3].map(i => `
-                        <div class="form-group">
-                            <input type="radio" name="correct-${levelNumber}-${taskCount}" value="${i}" ${i===0?'checked':''}>
-                            <input type="text" placeholder="Option ${i+1}" class="mcq-input" data-index="${i}" id="mcq-${levelNumber}-${taskCount}-${i}">
-                        </div>`).join('')}
-                </div>
-            </div>`;
+        const mcqContainer = document.createElement('div');
+        mcqContainer.classList.add('form-group');
+
+        const label = document.createElement('label');
+        label.textContent = 'MCQ Options';
+        mcqContainer.appendChild(label);
+
+        const optionsDiv = document.createElement('div');
+        optionsDiv.id = `mcqOptions-${levelNumber}-${taskCount}`;
+
+        [1, 2, 3, 4].forEach(i => {
+            const optionDiv = document.createElement('div');
+            optionDiv.classList.add('form-group');
+
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = `correct-${levelNumber}-${taskCount}`;
+            radio.value = i;
+            if (i === 1) radio.checked = true;
+
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.placeholder = `Option ${i}`;
+            textInput.classList.add('mcq-input');
+            textInput.dataset.index = i;
+            textInput.id = `mcq-${levelNumber}-${taskCount}-${i}`;
+
+            optionDiv.appendChild(radio);
+            optionDiv.appendChild(textInput);
+            optionsDiv.appendChild(optionDiv);
+        });
+
+        mcqContainer.appendChild(optionsDiv);
+        optionsContainer.appendChild(mcqContainer);
+
     } else if (type === 'image') {
-        optionsContainer.innerHTML = `
+        const imageDiv = createElement(`
             <div class="form-group">
                 <label for="imageAnswer-${levelNumber}-${taskCount}">Expected Image Format</label>
                 <select id="imageAnswer-${levelNumber}-${taskCount}">
@@ -196,25 +232,33 @@ function renderTaskOptions(levelNumber, taskCount, type) {
                     <option>Exact image matching</option>
                     <option>Image content verification</option>
                 </select>
-            </div>`;
+            </div>
+        `);
+        optionsContainer.appendChild(imageDiv);
+
     } else if (type === 'text') {
-        optionsContainer.innerHTML = `
+        const textDiv = createElement(`
             <div class="form-group">
                 <label for="textAnswer-${levelNumber}-${taskCount}">Correct Answer (Text)</label>
                 <input type="text" id="textAnswer-${levelNumber}-${taskCount}" placeholder="Enter the correct answer">
             </div>
             <div class="form-group">
                 <label><input type="checkbox" id="caseSensitive-${levelNumber}-${taskCount}"> Case Sensitive</label>
-            </div>`;
+            </div>
+        `);
+        optionsContainer.appendChild(textDiv);
     }
 
-    // Add QR input field for manual entry (required)
-    optionsContainer.innerHTML += `
+    // Add QR input field (always required)
+    const qrDiv = createElement(`
         <div class="form-group">
             <label for="taskQr-${levelNumber}-${taskCount}">QR Value *</label>
             <input type="text" id="taskQr-${levelNumber}-${taskCount}" placeholder="Enter QR value" required>
-        </div>`;
+        </div>
+    `);
+    optionsContainer.appendChild(qrDiv);
 }
+
 
 // --------------------
 // Submit Event - robust version
@@ -295,21 +339,27 @@ async function handleCreateEvent(e) {
                         alert(`Please select the correct answer for Level ${lvlNumber} Task ${taskNumber}`);
                         return;
                     }
-                    correctAnswer = parseInt(selected.value);
-                } else if (taskType === 'text') {
-                    const txt = taskDiv.querySelector(`#textAnswer-${lvlNumber}-${taskNumber}`) || { value: '' };
-                    correctAnswer = document.getElementById(`textAnswer-${lvlNumber}-${taskNumber}`).value
-                                      .split(',').map(ans => ans.trim());
-                    const caseSensitiveEl = taskDiv.querySelector(`#caseSensitive-${lvlNumber}-${taskNumber}`);
-                    // store case sensitivity as part of answer object if needed
-                    if (caseSensitiveEl) {
-                        correctAnswer = { answer: correctAnswer, caseSensitive: caseSensitiveEl.checked };
-                    }
-                } else if (taskType === 'image') {
-                    const imgOpt = taskDiv.querySelector(`#imageAnswer-${lvlNumber}-${taskNumber}`) || { value: '' };
-                    correctAnswer = imgOpt.value;
-                }
+                    // get the selected option index (1–4)
+                    const selectedIndex = parseInt(selected.value);
 
+                    // get the actual selected option text
+                    correctAnswer = options[selectedIndex - 1] || '';
+
+                } else if (taskType === 'text') {
+                    const input = document.getElementById(`textAnswer-${lvlNumber}-${taskNumber}`);
+                    const caseBox = document.getElementById(`caseSensitive-${lvlNumber}-${taskNumber}`);
+
+                    // Always store a SINGLE STRING, not an array
+                    const answerText = input ? input.value.trim() : '';
+
+                    correctAnswer = answerText;  // <-- This is the important part!
+                    options = [];                // No options for text
+                    caseSensitive = caseBox && caseBox.checked ? 1 : 0;
+                    correctAnswer = {
+                        answer: taskType === 'text' ? answerText.trim() : answerText,
+                        caseSensitive: caseSensitive
+                    };
+                }
                 // call api.addTask with the values
                 try {
                     await api.addTask(levelIdFromApi, parseInt(taskNumber), taskType, question, options, correctAnswer, qrValue, hint);
@@ -422,11 +472,83 @@ async function viewEventDetails(eventId){
 }
 
 // --------------------
-// Update/Delete
+// Update Event Details
 // --------------------
-function updateEvent(eventId){
-    alert('Edit functionality coming soon');
+async function updateEvent(eventId) {
+    try {
+        // 1️⃣ Get event data
+        const eventResp = await api.getEvent(eventId);
+        const event = eventResp.data;
+        if (!event) return;
+
+        // 2️⃣ Get modal elements
+        const modal = document.getElementById('eventModal');
+        const modalBody = document.getElementById('modalBody');
+
+        // 3️⃣ Build editable form
+        let formHTML = `
+            <div class="results-detail">
+                <div class="result-item">
+                    <label class="result-label">Event Name:</label>
+                    <input type="text" id="editEventTitle" value="${event.title}" class="result-value" />
+                </div>
+                <div class="result-item">
+                    <label class="result-label">Description:</label>
+                    <textarea id="editEventDescription" class="result-value">${event.description}</textarea>
+                </div>
+                <div class="result-item">
+                    <label class="result-label">Status:</label>
+                    <select id="editEventStatus" class="result-value">
+                        <option value="active" ${event.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="inactive" ${event.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>
+                </div>
+                <div style="margin-top:1rem;">
+                    <button id="saveEventBtn" class="btn btn-primary">Save Changes</button>
+                    <button id="cancelEventBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        modalBody.innerHTML = formHTML;
+        modal.classList.add('active');
+
+        // 4️⃣ Handle save
+        document.getElementById('saveEventBtn').onclick = async () => {
+            const updatedTitle = document.getElementById('editEventTitle').value.trim();
+            const updatedDescription = document.getElementById('editEventDescription').value.trim();
+            const updatedStatus = document.getElementById('editEventStatus').value;
+
+            if (!updatedTitle) return alert('Event title cannot be empty');
+
+            try {
+                const updateResp = await api.updateEvent(eventId, updatedTitle, updatedDescription);
+                if (updateResp.success) {
+                    alert('Event updated successfully!');
+                    modal.classList.remove('active');
+                    // Optionally reload the events list
+                    if (typeof loadEvents === 'function') loadEvents();
+                } else {
+                    alert('Failed to update event: ' + updateResp.message);
+                }
+            } catch (err) {
+                console.error('Update event error:', err);
+                alert('Error updating event');
+            }
+        };
+
+        // 5️⃣ Handle cancel
+        document.getElementById('cancelEventBtn').onclick = () => {
+            modal.classList.remove('active');
+        };
+
+    } catch (err) {
+        console.error('Load event for update error:', err);
+        alert('Failed to load event details for editing');
+    }
 }
+
+
 
 async function deleteEvent(eventId){
     if(!confirm('Are you sure you want to delete this event?')) return;

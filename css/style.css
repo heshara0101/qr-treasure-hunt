@@ -25,49 +25,101 @@ body {
     line-height: 1.6;
 }
 
-/* Navbar */
+/* -------------------------
+   Global Navbar Styles
+------------------------- */
 .navbar {
-    background-color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    width: 100%;
+    background: white; /* Blue */
+    color: #ca9de6;
+    padding: 0.5rem 1rem;
+    position: relative;
+    z-index: 1000;
 }
 
 .nav-container {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 0.5rem 1rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--primary-color);
+    cursor: pointer;
+    white-space: nowrap;
 }
 
+/* Navigation Menu */
 .nav-menu {
     display: flex;
-    gap: 2rem;
-    align-items: center;
+    gap: 1rem;
 }
 
 .nav-link {
-    color: var(--text-dark);
+    color: #ca9de6;
     text-decoration: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    padding: 0.1rem 1rem;
+    border-radius: 5px;
+    transition: background 0.2s ease;
 }
 
 .nav-link:hover,
 .nav-link.active {
-    background-color: var(--primary-color);
-    color: white;
+    background: #352262;
 }
+
+/* Hamburger Menu */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.nav-toggle span {
+    width: 25px;
+    height: 3px;
+    background: var(--primary-color);
+    margin: 4px 0;
+    transition: 0.3s;
+}
+
+/* -------------------------
+   Responsive Styles
+------------------------- */
+@media (max-width: 768px) {
+    .nav-menu {
+        flex-direction: column;
+        width: 100%;
+        display: none; /* hide by default on mobile */
+        margin-top: 0.5rem;
+        background: #5d3aaf;
+        border-radius: 5px;
+        padding: 0.5rem 0;
+    }
+
+    .nav-menu.show {
+        display: flex;
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+    }
+
+    .nav-toggle {
+        display: flex;
+    }
+
+    .logo {
+        font-size: 1.2rem;
+    }
+}
+
 
 /* Hero Section */
 .hero {
