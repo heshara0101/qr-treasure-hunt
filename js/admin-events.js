@@ -1,10 +1,47 @@
 // ================================
-// Admin Event Management
-// ================================
+// Admin Event Management - Fixed & Improved 
+// - Robust DOM lookups with helpful errors
+// - Uses actual DOM IDs (no fragile index math)
+// - Handles deletions without renumbering
+// - Better validation and API error handling
+// - Cleaner structure and comments
+
+// State
 let currentEvent = null;
 let levelCount = 0;
 let taskCountPerLevel = {};
 let selectedTaskTypes = {};
+
+// --------------------
+// Small helpers
+// --------------------
+function safeGet(id, { required = true, trim = true } = {}) {
+    const el = document.getElementById(id);
+    if (!el) {
+        const msg = `Missing element: ${id}`;
+        console.error(msg);
+        if (required) throw new Error(msg);
+        return '';
+    }
+    const val = el.value === undefined ? '' : el.value;
+    return trim && typeof val === 'string' ? val.trim() : val;
+}
+
+function queryOne(selector, context = document, required = true) {
+    const el = context.querySelector(selector);
+    if (!el && required) {
+        console.error(`Missing element selector: ${selector}`);
+        throw new Error(`Missing element: ${selector}`);
+    }
+    return el;
+}
+
+function parseIdNumber(str, prefix) {
+    // Example: parseIdNumber('task-2-5', 'task-2-') => '5'
+    if (!str || !prefix) return null;
+    if (!str.startsWith(prefix)) return null;
+    return str.slice(prefix.length);
+}
 
 // --------------------
 // Navigation
@@ -21,7 +58,12 @@ function initializeEventForm() {
     levelCount = 0;
     taskCountPerLevel = {};
     selectedTaskTypes = {};
+
     const levelsContainer = document.getElementById('levelsContainer');
+    if (!levelsContainer) {
+        console.error('No #levelsContainer found in DOM');
+        return;
+    }
     levelsContainer.innerHTML = '';
     addLevel();
 }
@@ -32,31 +74,38 @@ function initializeEventForm() {
 function addLevel() {
     levelCount++;
     const container = document.getElementById('levelsContainer');
+    if (!container) return console.error('Missing #levelsContainer');
+
+    const levelNumber = levelCount; // stable unique number for IDs
+    taskCountPerLevel[levelNumber] = 0;
 
     const levelDiv = document.createElement('div');
     levelDiv.className = 'level-item';
-    levelDiv.id = `level-${levelCount}`;
+    levelDiv.id = `level-${levelNumber}`;
+
     levelDiv.innerHTML = `
         <div class="level-header">
-            <h4>Level ${levelCount}</h4>
-            <button type="button" class="remove-level-btn" onclick="removeLevel(${levelCount})">Remove</button>
+            <h4>Level ${levelNumber}</h4>
+            <button type="button" class="remove-level-btn" onclick="removeLevel(${levelNumber})">Remove</button>
         </div>
         <div class="form-group">
-            <label for="levelName-${levelCount}">Level Name</label>
-            <input type="text" id="levelName-${levelCount}" placeholder="e.g., Finding the Entrance">
+            <label for="levelName-${levelNumber}">Level Name</label>
+            <input type="text" id="levelName-${levelNumber}" placeholder="e.g., Finding the Entrance">
         </div>
         <div class="form-group">
-            <label for="levelDescription-${levelCount}">Description</label>
-            <textarea id="levelDescription-${levelCount}" rows="2"></textarea>
+            <label for="levelDescription-${levelNumber}">Description</label>
+            <textarea id="levelDescription-${levelNumber}" rows="2"></textarea>
         </div>
-        <div class="tasks-container" id="tasks-${levelCount}">
-            <h4 style="margin-bottom: 0.75rem;">Tasks for Level ${levelCount}</h4>
+        <div class="tasks-container" id="tasks-${levelNumber}">
+            <h4 style="margin-bottom: 0.75rem;">Tasks for Level ${levelNumber}</h4>
         </div>
-        <button type="button" class="btn btn-secondary" onclick="addTask(${levelCount})">+ Add Task</button>
+        <button type="button" class="btn btn-secondary" onclick="addTask(${levelNumber})">+ Add Task</button>
     `;
+
     container.appendChild(levelDiv);
 
-    addTask(levelCount); // Add first task automatically
+    // Add first task automatically
+    addTask(levelNumber);
 }
 
 function removeLevel(levelNumber) {
@@ -73,9 +122,12 @@ function addTask(levelNumber) {
     const taskCount = taskCountPerLevel[levelNumber];
 
     const tasksContainer = document.getElementById(`tasks-${levelNumber}`);
+    if (!tasksContainer) return console.error(`Missing tasks container for level ${levelNumber}`);
+
     const taskDiv = document.createElement('div');
     taskDiv.className = 'task-item';
     taskDiv.id = `task-${levelNumber}-${taskCount}`;
+
     taskDiv.innerHTML = `
         <div style="flex: 1;">
             <div class="form-group">
@@ -98,6 +150,7 @@ function addTask(levelNumber) {
         </div>
         <button type="button" class="btn btn-danger" onclick="removeTask(${levelNumber}, ${taskCount})">Remove</button>
     `;
+
     tasksContainer.appendChild(taskDiv);
     selectTaskType(levelNumber, taskCount, 'mcq', { target: taskDiv.querySelector('.task-type-btn.active') });
 }
@@ -112,13 +165,14 @@ function selectTaskType(levelNumber, taskCount, type, event) {
 
     const buttons = document.querySelectorAll(`#task-${levelNumber}-${taskCount} .task-type-btn`);
     buttons.forEach(btn => btn.classList.remove('active'));
-    if(event?.target) event.target.classList.add('active');
+    if (event?.target) event.target.classList.add('active');
 
     renderTaskOptions(levelNumber, taskCount, type);
 }
 
 function renderTaskOptions(levelNumber, taskCount, type) {
     const optionsContainer = document.getElementById(`taskOptions-${levelNumber}-${taskCount}`);
+    if (!optionsContainer) return console.error(`Missing options container for task ${levelNumber}-${taskCount}`);
     optionsContainer.innerHTML = '';
 
     if (type === 'mcq') {
@@ -129,7 +183,7 @@ function renderTaskOptions(levelNumber, taskCount, type) {
                     ${[0,1,2,3].map(i => `
                         <div class="form-group">
                             <input type="radio" name="correct-${levelNumber}-${taskCount}" value="${i}" ${i===0?'checked':''}>
-                            <input type="text" placeholder="Option ${i+1}" class="mcq-input" data-index="${i}">
+                            <input type="text" placeholder="Option ${i+1}" class="mcq-input" data-index="${i}" id="mcq-${levelNumber}-${taskCount}-${i}">
                         </div>`).join('')}
                 </div>
             </div>`;
@@ -153,118 +207,138 @@ function renderTaskOptions(levelNumber, taskCount, type) {
                 <label><input type="checkbox" id="caseSensitive-${levelNumber}-${taskCount}"> Case Sensitive</label>
             </div>`;
     }
-<<<<<<< HEAD
 
-    // Add QR input field for manual entry
+    // Add QR input field for manual entry (required)
     optionsContainer.innerHTML += `
         <div class="form-group">
             <label for="taskQr-${levelNumber}-${taskCount}">QR Value *</label>
             <input type="text" id="taskQr-${levelNumber}-${taskCount}" placeholder="Enter QR value" required>
         </div>`;
-
 }
 
-
-=======
-}
-
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
 // --------------------
-// Submit Event
+// Submit Event - robust version
 // --------------------
 async function handleCreateEvent(e) {
     e.preventDefault();
 
-    const eventName = document.getElementById('eventName').value.trim();
-    const eventDescription = document.getElementById('eventDescription').value.trim();
-    if (!eventName) return alert('Event name is required');
-
     try {
+        const eventNameEl = document.getElementById('eventName');
+        if (!eventNameEl) return alert('Event name input not found in DOM');
+        const eventName = eventNameEl.value.trim();
+
+        const eventDescription = (document.getElementById('eventDescription') || { value: '' }).value.trim();
+
+        if (!eventName) return alert('Event name is required');
+
         const eventResp = await api.createEvent(eventName, eventDescription);
+        if (!eventResp?.success) {
+            console.error('createEvent failed:', eventResp);
+            return alert('Failed to create event (API error)');
+        }
+
         const eventId = eventResp.data.id;
+        if (!eventId) throw new Error('No event id returned from API');
 
-<<<<<<< HEAD
-        for (let i = 1; i <= levelCount; i++) {
-=======
-        for(let i = 1; i <= levelCount; i++){
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
-            const levelName = document.getElementById(`levelName-${i}`).value || `Level ${i}`;
-            const levelDescription = document.getElementById(`levelDescription-${i}`).value;
+        // Iterate over existing level DOM nodes rather than numeric index to avoid gaps
+        const levelsContainer = document.getElementById('levelsContainer');
+        const levelDivs = Array.from(levelsContainer.querySelectorAll('.level-item'));
 
-            const levelResp = await api.addLevel(eventId, i, levelName, levelDescription);
+        for (const levelDiv of levelDivs) {
+            // Extract level number from id 'level-<n>'
+            const lvlParts = levelDiv.id.split('-');
+            const lvlNumber = lvlParts[1];
 
-            const taskDivs = document.querySelectorAll(`#tasks-${i} .task-item`);
-<<<<<<< HEAD
-            for (let j = 0; j < taskDivs.length; j++) {
-                const taskNumber = j + 1;
-=======
-            for(let j=0; j<taskDivs.length; j++){
-                const taskNumber = j+1;
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
-                const taskType = selectedTaskTypes[`${i}-${taskNumber}`] || 'mcq';
-                const question = document.getElementById(`taskQuestion-${i}-${taskNumber}`).value;
-                const hint = document.getElementById(`taskHint-${i}-${taskNumber}`).value;
+            const levelName = (levelDiv.querySelector(`#levelName-${lvlNumber}`) || { value: `Level ${lvlNumber}` }).value.trim() || `Level ${lvlNumber}`;
+            const levelDescription = (levelDiv.querySelector(`#levelDescription-${lvlNumber}`) || { value: '' }).value.trim();
+
+            const levelResp = await api.addLevel(eventId, parseInt(lvlNumber), levelName, levelDescription);
+            if (!levelResp?.success) {
+                console.error('addLevel failed for', lvlNumber, levelResp);
+                throw new Error('Failed to add level ' + lvlNumber);
+            }
+
+            const levelIdFromApi = levelResp.data.id; // for adding tasks
+
+            // Get task items inside this level
+            const taskDivs = Array.from(levelDiv.querySelectorAll('.task-item'));
+            for (const taskDiv of taskDivs) {
+                // parse task id 'task-<level>-<taskNumber>'
+                const taskParts = taskDiv.id.split('-');
+                const taskNumber = taskParts[2];
+
+                const taskType = selectedTaskTypes[`${lvlNumber}-${taskNumber}`] || 'mcq';
+
+                const questionEl = taskDiv.querySelector(`#taskQuestion-${lvlNumber}-${taskNumber}`) || { value: '' };
+                const question = (questionEl.value || '').trim();
+
+                const hintEl = taskDiv.querySelector(`#taskHint-${lvlNumber}-${taskNumber}`) || { value: '' };
+                const hint = (hintEl.value || '').trim();
+
+                // QR value is required
+                const qrEl = taskDiv.querySelector(`#taskQr-${lvlNumber}-${taskNumber}`);
+                if (!qrEl || !(qrEl.value || '').trim()) {
+                    alert(`QR value is required for Level ${lvlNumber} Task ${taskNumber}`);
+                    return; // abort create
+                }
+                const qrValue = qrEl.value.trim();
 
                 let options = [];
                 let correctAnswer = null;
-<<<<<<< HEAD
-
-                // Use only manual QR, required
-                const manualQrInput = document.getElementById(`taskQr-${i}-${taskNumber}`).value.trim();
-                if (!manualQrInput) {
-                    alert(`QR value is required for Level ${i} Task ${taskNumber}`);
-                    return;
-                }
-                const qrValue = manualQrInput;
 
                 if (taskType === 'mcq') {
-                    options = Array.from(taskDivs[j].querySelectorAll('.mcq-input')).map(input => input.value);
-                    correctAnswer = parseInt(taskDivs[j].querySelector(`input[name="correct-${i}-${taskNumber}"]:checked`).value);
-                } else if (taskType === 'text') {
-=======
-                const qrValue = JSON.stringify({ event: eventName, level: i, task: taskNumber, timestamp: Date.now() });
+                    const mcqInputs = Array.from(taskDiv.querySelectorAll('.mcq-input'));
+                    options = mcqInputs.map(i => (i.value || '').trim());
 
-                if(taskType === 'mcq'){
-                    options = Array.from(taskDivs[j].querySelectorAll('.mcq-input')).map(input=>input.value);
-                    correctAnswer = parseInt(taskDivs[j].querySelector(`input[name="correct-${i}-${taskNumber}"]:checked`).value);
-                } else if(taskType === 'text'){
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
-                    correctAnswer = document.getElementById(`textAnswer-${i}-${taskNumber}`).value;
+                    const selected = taskDiv.querySelector(`input[name="correct-${lvlNumber}-${taskNumber}"]:checked`);
+                    if (!selected) {
+                        alert(`Please select the correct answer for Level ${lvlNumber} Task ${taskNumber}`);
+                        return;
+                    }
+                    correctAnswer = parseInt(selected.value);
+                } else if (taskType === 'text') {
+                    const txt = taskDiv.querySelector(`#textAnswer-${lvlNumber}-${taskNumber}`) || { value: '' };
+                    correctAnswer = document.getElementById(`textAnswer-${lvlNumber}-${taskNumber}`).value
+                                      .split(',').map(ans => ans.trim());
+                    const caseSensitiveEl = taskDiv.querySelector(`#caseSensitive-${lvlNumber}-${taskNumber}`);
+                    // store case sensitivity as part of answer object if needed
+                    if (caseSensitiveEl) {
+                        correctAnswer = { answer: correctAnswer, caseSensitive: caseSensitiveEl.checked };
+                    }
+                } else if (taskType === 'image') {
+                    const imgOpt = taskDiv.querySelector(`#imageAnswer-${lvlNumber}-${taskNumber}`) || { value: '' };
+                    correctAnswer = imgOpt.value;
                 }
 
-                await api.addTask(levelResp.data.id, taskNumber, taskType, question, options, correctAnswer, qrValue, hint);
-<<<<<<< HEAD
-
-=======
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
+                // call api.addTask with the values
+                try {
+                    await api.addTask(levelIdFromApi, parseInt(taskNumber), taskType, question, options, correctAnswer, qrValue, hint);
+                } catch (taskErr) {
+                    console.error('addTask failed', taskErr);
+                    throw taskErr;
+                }
             }
         }
 
         alert('Event created successfully!');
-        document.getElementById('eventForm').reset();
+        const eventForm = document.getElementById('eventForm');
+        if (eventForm) eventForm.reset();
         initializeEventForm();
         showSection('events');
         await loadEvents();
 
-<<<<<<< HEAD
     } catch (err) {
-=======
-    } catch(err){
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
-        console.error(err);
+        console.error('Failed to create event:', err);
         alert('Failed to create event. Check console for details.');
     }
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
 // --------------------
 // Load Events
 // --------------------
 async function loadEvents() {
     const tbody = document.getElementById('eventsTableBody');
+    if (!tbody) return console.error('Missing #eventsTableBody');
     tbody.innerHTML = '';
 
     try {
@@ -306,7 +380,6 @@ async function loadEvents() {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Error loading events</td></tr>';
     }
 }
-
 
 // --------------------
 // View Event Details
@@ -367,3 +440,17 @@ async function deleteEvent(eventId){
         alert('Failed to delete event');
     }
 }
+
+// Export functions to global scope (if bundling not used)
+window.goToCreateEvent = goToCreateEvent;
+window.initializeEventForm = initializeEventForm;
+window.addLevel = addLevel;
+window.removeLevel = removeLevel;
+window.addTask = addTask;
+window.removeTask = removeTask;
+window.selectTaskType = selectTaskType;
+window.handleCreateEvent = handleCreateEvent;
+window.loadEvents = loadEvents;
+window.viewEventDetails = viewEventDetails;
+window.updateEvent = updateEvent;
+window.deleteEvent = deleteEvent;

@@ -1,6 +1,7 @@
 // user-events.js
 // Handles User Events & Participation using APIClient
 
+// -------------------- Load Available Events --------------------
 async function loadAvailableEvents() {
     try {
         const res = await api.listEvents();
@@ -22,15 +23,15 @@ async function loadAvailableEvents() {
             return;
         }
 
-        for (const event of events) {
-            const eventId = event.id || event.event_id; // adjust if PHP returns 'event_id'
+        events.forEach(event => {
+            const eventId = event.id || event.event_id;
             const userProgress = allProgress.find(p => p.event_id == eventId) || { status: 'not-joined', completed_tasks: [] };
             const hasJoined = userProgress.status !== 'not-joined';
             const participants = event.total_joined || 0;
 
-            const eventCard = document.createElement('div');
-            eventCard.className = 'event-card';
-            eventCard.innerHTML = `
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.innerHTML = `
                 <div class="event-header">
                     <h3>${event.title}</h3>
                     <p>${event.description}</p>
@@ -51,8 +52,8 @@ async function loadAvailableEvents() {
                     </button>
                 </div>
             `;
-            eventsGrid.appendChild(eventCard);
-        }
+            eventsGrid.appendChild(card);
+        });
 
     } catch (error) {
         console.error('Load available events error:', error);
@@ -60,6 +61,7 @@ async function loadAvailableEvents() {
     }
 }
 
+// -------------------- Join Event Modal --------------------
 async function joinEventConfirm(eventId) {
     try {
         const res = await api.getEvent(eventId);
@@ -72,69 +74,100 @@ async function joinEventConfirm(eventId) {
 
         eventTitle.textContent = event.title;
 
-        let detailsHTML = `<p>${event.description}</p><h4>Event Structure:</h4>`;
-        event.levels?.forEach(level => {
-            detailsHTML += `<div style="margin-left:1rem;padding:0.75rem;background:#f0f0f0;border-radius:4px;margin-bottom:0.5rem;">
-                <strong>Level ${level.level_number}:</strong> ${level.title} (${level.tasks?.length || 0} tasks)
-            </div>`;
-        });
+        let detailsHTML = '';
+
+        // First Level
+        const firstLevel = event.levels?.[0];
+        if (!firstLevel) {
+            detailsHTML = '<p>No levels available for this event yet.</p>';
+        } else {
+            detailsHTML += `<p>${event.description || ''}</p>`;
+            detailsHTML += `<h4>First Level: ${firstLevel.title}</h4>`;
+
+            if (firstLevel.tasks?.length > 0) {
+                detailsHTML += '<ul>';
+                firstLevel.tasks.forEach(task => {
+                    detailsHTML += `<li>${task.task_number}. ${task.question}</li>`;
+                });
+                detailsHTML += '</ul>';
+            } else {
+                detailsHTML += '<p>No tasks added to this level yet.</p>';
+            }
+        }
 
         detailsBody.innerHTML = detailsHTML;
         modal.classList.add('active');
+
+        // Store for later
         window.currentEventToJoin = eventId;
+        window.firstLevelTasks = firstLevel?.tasks || [];
+        window.currentTaskIndex = 0;
 
     } catch (error) {
         console.error('Join event confirm error:', error);
     }
 }
 
+// -------------------- Join Event & Redirect --------------------
 async function joinEvent() {
     const eventId = window.currentEventToJoin;
     if (!eventId) return;
 
     try {
         const res = await api.joinEvent(eventId);
-        if (res.success) {
-<<<<<<< HEAD
-        alert('Event joined successfully!');
+        if (!res.success) throw new Error(res.message);
 
-        // Close modal
+        alert('Event joined successfully!');
         closeModal();
 
-        // Reload event lists
+        // Reload events
         await loadAvailableEvents();
         await loadMyEvents();
 
         // Redirect to Scan QR tab
         showSection('scan-qr');
 
-        // Start scanner safely after DOM updates
+        // Wait a tiny bit before initializing scanner to ensure DOM renders
         setTimeout(() => {
             if (typeof initializeScanner === 'function') {
                 initializeScanner();
             } else {
-                console.error('initializeScanner() not found.');
+                console.error('initializeScanner() not found!');
             }
-        }, 100); // 100ms delay ensures scripts loaded
-    } else {
-        alert(res.message || 'Failed to join event');
-    }
+        }, 100);
 
-=======
-            alert('Event joined successfully!');
-            closeModal();
-            await loadAvailableEvents();
-            await loadMyEvents();
-        } else {
-            alert(res.message || 'Failed to join event');
-        }
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     } catch (error) {
         console.error('Join event error:', error);
-        alert('Failed to join event');
+        alert('Failed to join event: ' + error.message);
     }
 }
 
+// -------------------- Show First Task --------------------
+function showFirstTask() {
+    if (!window.firstLevelTasks || window.firstLevelTasks.length === 0) return;
+
+    const task = window.firstLevelTasks[window.currentTaskIndex];
+
+    const scanSection = document.getElementById('scan-qr');
+    scanSection.innerHTML = `
+        <h3>Task: ${task.title || task.question}</h3>
+        <p>Scan the QR code for this task.</p>
+        <div id="reader"></div>
+        <div id="scanResult" class="scan-result"></div>
+        <div class="qr-upload">
+            <p>Or upload a QR code image:</p>
+            <input type="file" id="qrImageInput" accept="image/*" onchange="handleImageUpload(event)">
+        </div>
+    `;
+
+    showSection('scan-qr');
+
+    if (typeof initializeScanner === 'function') {
+        setTimeout(() => initializeScanner(), 100); // ensure #reader exists
+    }
+}
+
+// -------------------- Load My Events --------------------
 async function loadMyEvents() {
     try {
         const progressRes = await api.getProgress();
@@ -161,9 +194,9 @@ async function loadMyEvents() {
             const completedTasks = ue.tasks_completed || 0;
             const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-            const eventItem = document.createElement('div');
-            eventItem.className = 'my-event-item';
-            eventItem.innerHTML = `
+            const item = document.createElement('div');
+            item.className = 'my-event-item';
+            item.innerHTML = `
                 <div class="event-info-section">
                     <h3>${event.title}</h3>
                     <p>${event.description}</p>
@@ -189,7 +222,7 @@ async function loadMyEvents() {
                     </div>
                 </div>
             `;
-            myEventsList.appendChild(eventItem);
+            myEventsList.appendChild(item);
         });
 
     } catch (error) {
@@ -197,11 +230,17 @@ async function loadMyEvents() {
     }
 }
 
+// -------------------- Continue Event --------------------
 function continueEvent(userEventId) {
     window.currentUserEventId = userEventId;
     showSection('scan-qr');
+
+    setTimeout(() => {
+        if (typeof initializeScanner === 'function') initializeScanner();
+    }, 100);
 }
 
+// -------------------- Modal --------------------
 function closeModal() {
     document.querySelectorAll('.modal').forEach(modal => modal.classList.remove('active'));
 }
@@ -212,7 +251,7 @@ window.onclick = function(event) {
     }
 }
 
-// Initial load
+// -------------------- Init --------------------
 document.addEventListener('DOMContentLoaded', () => {
     loadAvailableEvents();
     loadMyEvents();

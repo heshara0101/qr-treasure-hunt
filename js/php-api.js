@@ -5,11 +5,7 @@
 
 class APIClient {
     constructor(baseUrl = 'http://localhost/qr-treasure-hunt/api') {
-<<<<<<< HEAD
         this.baseUrl = baseUrl.replace(/\/+$/, ''); // remove trailing slash
-=======
-        this.baseUrl = baseUrl;
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
         this.token = localStorage.getItem('token');
     }
 
@@ -54,12 +50,8 @@ class APIClient {
         }
     }
 
-<<<<<<< HEAD
     // ========== Authentication ==========
 
-=======
-    // Authentication
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     async register(email, password, name, phone) {
         return this.request('auth.php?action=register', 'POST', {
             email,
@@ -75,11 +67,7 @@ class APIClient {
             password
         });
 
-<<<<<<< HEAD
         if (result.success && result.data && result.data.token) {
-=======
-        if (result.success && result.data.token) {
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
             this.setToken(result.data.token);
         }
 
@@ -90,12 +78,8 @@ class APIClient {
         return this.request('auth.php?action=get-user');
     }
 
-<<<<<<< HEAD
     // ========== Events ==========
 
-=======
-    // Events
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     async createEvent(title, description) {
         return this.request('events.php?action=create', 'POST', {
             title,
@@ -123,12 +107,8 @@ class APIClient {
         return this.request(`events.php?action=delete&id=${id}`, 'DELETE');
     }
 
-<<<<<<< HEAD
     // ========== Levels ==========
 
-=======
-    // Levels
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     async addLevel(eventId, levelNumber, title, description) {
         return this.request('events.php?action=add-level', 'POST', {
             event_id: eventId,
@@ -138,14 +118,9 @@ class APIClient {
         });
     }
 
-<<<<<<< HEAD
     // ========== Tasks ==========
 
     async addTask(levelId, taskNumber, type, question, options, correctAnswer, qr_value) {
-=======
-    // Tasks
-    async addTask(levelId, taskNumber, type, question, options, correctAnswer,qr_value) {
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
         return this.request('events.php?action=add-task', 'POST', {
             level_id: levelId,
             task_number: taskNumber,
@@ -156,7 +131,6 @@ class APIClient {
             qr_value
         });
     }
-<<<<<<< HEAD
     
      getEventResults(eventId) {
         return this.request(
@@ -167,17 +141,12 @@ class APIClient {
 
     // ========== Progress ==========
 
-=======
-
-    // Progress
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     async joinEvent(eventId) {
         return this.request('progress.php?action=join-event', 'POST', {
             event_id: eventId
         });
     }
 
-<<<<<<< HEAD
     // Your original: no argument, backend finds current user_event itself
     async getProgress() {
         return this.request('progress.php?action=get-progress');
@@ -215,36 +184,13 @@ class APIClient {
             `progress.php?action=scan-qr&qr=${encodeURIComponent(qrValue)}`
         );
     }
-=======
-    async getProgress() {
-        return this.request(`progress.php?action=get-progress`);
-    }
-
-    async submitAnswer(taskId, levelId, eventId, answer) {
-        return this.request('progress.php?action=submit-answer', 'POST', {
-            task_id: taskId,
-            level_id: levelId,
-            event_id: eventId,
-            answer
-        });
-    }
-
-    async scanQR(qrValue) {
-    return this.request(`progress.php?action=scan-qr&qr=${encodeURIComponent(qrValue)}`);
-}
-
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
 
     async getResults(eventId) {
         return this.request(`progress.php?action=get-results&event_id=${eventId}`);
     }
 
-<<<<<<< HEAD
     // ========== Admin ==========
 
-=======
-    // Admin
->>>>>>> 9d2d3fd10107955f01d64ad124785ad9889d0143
     async getEventResults(eventId) {
         return this.request(`admin.php?action=get-event-results&event_id=${eventId}`);
     }
