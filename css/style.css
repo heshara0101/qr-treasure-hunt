@@ -31,7 +31,8 @@ body {
 .navbar {
     width: 100%;
     background: white; /* Blue */
-    color: #ca9de6;
+    color: var(--primary-color);
+    font-weight: bold;
     padding: 0.5rem 1rem;
     position: relative;
     z-index: 1000;
@@ -62,7 +63,8 @@ body {
 }
 
 .nav-link {
-    color: #ca9de6;
+    color: var(--primary-color);
+    font-weight: bold;
     text-decoration: none;
     padding: 0.1rem 1rem;
     border-radius: 5px;
@@ -71,7 +73,8 @@ body {
 
 .nav-link:hover,
 .nav-link.active {
-    background: #352262;
+    background:  #9ea1a880;
+    
 }
 
 /* Hamburger Menu */
@@ -98,7 +101,7 @@ body {
         width: 100%;
         display: none; /* hide by default on mobile */
         margin-top: 0.5rem;
-        background: #5d3aaf;
+        background: #7357b6;
         border-radius: 5px;
         padding: 0.5rem 0;
     }
