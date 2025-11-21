@@ -487,27 +487,41 @@ async function updateEvent(eventId) {
 
         // 3️⃣ Build editable form
         let formHTML = `
-            <div class="results-detail">
-                <div class="result-item">
-                    <label class="result-label">Event Name:</label>
-                    <input type="text" id="editEventTitle" value="${event.title}" class="result-value" />
+           <div class="edit-card">
+                <h3 class="edit-title">Edit Event</h3>
+
+                <div class="form-group">
+                    <label class="form-label">Event Name</label>
+                    <input 
+                        type="text" 
+                        id="editEventTitle" 
+                        value="${event.title}" 
+                        class="form-input"
+                    />
                 </div>
-                <div class="result-item">
-                    <label class="result-label">Description:</label>
-                    <textarea id="editEventDescription" class="result-value">${event.description}</textarea>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea 
+                        id="editEventDescription" 
+                        class="form-input textarea-input"
+                    >${event.description}</textarea>
                 </div>
-                <div class="result-item">
-                    <label class="result-label">Status:</label>
-                    <select id="editEventStatus" class="result-value">
-                        <option value="active" ${event.status === 'active' ? 'selected' : ''}>Active</option>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select id="editEventStatus" class="form-input">
+                        <option value="active"   ${event.status === 'active' ? 'selected' : ''}>Active</option>
                         <option value="inactive" ${event.status === 'inactive' ? 'selected' : ''}>Inactive</option>
                     </select>
                 </div>
-                <div style="margin-top:1rem;">
-                    <button id="saveEventBtn" class="btn btn-primary">Save Changes</button>
-                    <button id="cancelEventBtn" class="btn btn-secondary">Cancel</button>
+
+                <div class="form-actions">
+                    <button id="saveEventBtn" class="btn-primary">Save Changes</button>
+                    <button id="cancelEventBtn" class="btn-secondary">Cancel</button>
                 </div>
             </div>
+
         `;
 
         modalBody.innerHTML = formHTML;

@@ -127,6 +127,7 @@ class APIClient {
 
     // ========== Tasks ==========
 
+<<<<<<< HEAD
     async addTask(levelId, taskNumber, type, question, options, correctAnswer, qr_value, qr_location) {
     return this.request('events.php?action=add-task', 'POST', {
         level_id: levelId,
@@ -140,6 +141,19 @@ class APIClient {
     });
 }
 
+=======
+    async addTask(levelId, taskNumber, type, question, options, correctAnswer, qr_value) {
+        return this.request('events.php?action=add-task', 'POST', {
+            level_id: levelId,
+            task_number: taskNumber,
+            type,
+            question,
+            options,
+            correct_answer: correctAnswer,
+            qr_value
+        });
+    }
+>>>>>>> 439c280fb684751b5ead34b88abe5739ecfd2ad1
     
      getEventResults(eventId) {
         return this.request(

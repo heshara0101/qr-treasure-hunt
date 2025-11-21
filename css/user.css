@@ -305,26 +305,76 @@
 /* -------------------------
    Task Modal (matches admin modals)
 -------------------------- */
+/* Modal background */
 .modal {
-    display: none;
+    display: none; /* default hidden */
     position: fixed;
-    top: 0;
+    z-index: 9999;
     left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 2000;
-    justify-content: center;
-    align-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.3s ease;
 }
 
+/* Modal box */
 .modal-content {
-    background: #fff;
-    padding: 1.5rem;
+    position: relative;
+    background: #ffffffdd;
+    backdrop-filter: blur(10px);
+    margin: 10% auto;
+    padding: 25px;
+    width: 90%;
+    max-width: 450px;
     border-radius: 12px;
-    max-width: 90%;
-    max-height: 90%;
-    overflow-y: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    animation: slideUp 0.35s ease;
+}
+
+/* Close button */
+.close {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #555;
+    transition: 0.2s;
+}
+
+.close:hover {
+    color: #000;
+    transform: scale(1.2);
+}
+
+/* Title */
+#taskTitle {
+    margin-bottom: 15px;
+    font-size: 22px;
+    text-align: center;
+    color: #222;
+}
+
+/* Submit button styling (override your existing button) */
+.modal-content .btn {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
 .task-question {

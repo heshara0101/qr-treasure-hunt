@@ -39,10 +39,6 @@ async function loadAvailableEvents() {
                 <div class="event-body">
                     <div class="event-info">
                         <div class="event-info-item">
-                            <span class="event-info-label">Levels</span>
-                            <span class="event-info-value">${event.levels?.length || 0}</span>
-                        </div>
-                        <div class="event-info-item">
                             <span class="event-info-label">Participants</span>
                             <span class="event-info-value">${participants}</span>
                         </div>
@@ -89,7 +85,7 @@ async function joinEventConfirm(eventId) {
                 firstLevel.tasks.forEach(task => {
                     detailsHTML += `<li>${task.task_number}. ${task.question}</li>`;
                 });
-                detailsHTML += '</ul>';
+                detailsHTML += '</ul></br>';
             } else {
                 detailsHTML += '<p>No tasks added to this level yet.</p>';
             }

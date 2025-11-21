@@ -236,7 +236,7 @@ async function handleServerScan(qrValue) {
         }
 
         // 4) Store task context for submission
-        window.currentTaskContext = { task, userEvent };
+        window.currentTaskContext = { task, userEvent, qrLocation: task.qr_location || 'Unknown location' };
 
         // 5) Show task modal
         showTask(task, userEvent);
@@ -349,7 +349,8 @@ async function submitTask() {
             throw new Error(submitResp.message);
         }
 
-        alert('✓ Task submitted successfully!');
+        alert("Task Completed!\nQR Location: " + window.currentTaskContext.qrLocation);
+
 
         if (typeof closeModal === 'function') {
             closeModal();

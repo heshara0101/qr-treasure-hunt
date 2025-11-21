@@ -180,8 +180,7 @@ function handleSubmitAnswer($input) {
 function handleScanQR() {
     global $db;
 
-    // 🔐 If scanning should be allowed only for logged-in users, keep this.
-    // If it causes "Unauthorized", comment this whole block out.
+    // 🔐 Require login to scan
     $user = getAuthUser();
     if (!$user) {
         jsonResponse(false, 'Unauthorized', null, 401);
@@ -203,7 +202,8 @@ function handleScanQR() {
             question,
             options,
             correct_answer,
-            qr_code_value
+            qr_code_value,
+            qr_location
         FROM tasks
         WHERE qr_code_value = ?
         LIMIT 1
@@ -223,7 +223,7 @@ function handleScanQR() {
         ? json_decode($task['options'], true)
         : [];
 
-    // Return ALL task columns
+    // Return ALL task columns (now includes qr_location)
     jsonResponse(true, 'QR code scanned', $task);
 }
 function handleGetResults() {
