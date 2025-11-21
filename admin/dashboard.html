@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - QR Treasure Hunt</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+    <div class="navbar admin-navbar">
+        <div class="nav-container">
+            <div class="logo">🗺️ QR Treasure Hunt - Admin</div>
+            <nav class="nav-menu">
+                <span class="user-info" id="adminUser">Admin</span>
+                <a href="#" class="nav-link" onclick="logout()">Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="admin-container">
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showSection('dashboard')" class="menu-item active" data-section="dashboard">📊 Dashboard</a></li>
+                <li><a href="#" onclick="showSection('events')" class="menu-item" data-section="events">📅 Events</a></li>
+                <li><a href="#" onclick="showSection('create-event')" class="menu-item" data-section="create-event">➕ Create Event</a></li>
+                <li><a href="#" onclick="showSection('users')" class="menu-item" data-section="users">👥 Users</a></li>
+                <li><a href="#" onclick="showSection('results')" class="menu-item" data-section="results">📈 Results</a></li>
+                <li><a href="#" onclick="showSection('settings')" class="menu-item" data-section="settings">⚙️ Settings</a></li>
+            </ul>
+        </aside>
+
+        <main class="admin-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <h2>Dashboard Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="totalUsers">0</h3>
+                        <p>Total Users</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="totalEvents">0</h3>
+                        <p>Active Events</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="ongoingTrials">0</h3>
+                        <p>Ongoing Trials</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="completedTrials">0</h3>
+                        <p>Completed Trials</p>
+                    </div>
+                </div>
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="activityList" class="activity-list"></div>
+                </div>
+            </section>
+
+            <!-- Events Section -->
+            <section id="events" class="section">
+                <h2>Events Management</h2>
+                <div class="search-bar">
+                    <input type="text" id="eventSearch" placeholder="Search events...">
+                    <button class="btn btn-primary" onclick="goToCreateEvent()">+ Create New Event</button>
+                </div>
+                <div id="eventsList" class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event Name</th>
+                                <th>Levels</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th>Participants</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Create Event Section -->
+            <section id="create-event" class="section">
+                <h2>Create New Event</h2>
+                <form id="eventForm" onsubmit="handleCreateEvent(event)" class="event-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="eventName">Event Name *</label>
+                            <input type="text" id="eventName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="eventDescription">Description</label>
+                            <textarea id="eventDescription" rows="3"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Event Levels & Tasks</h3>
+                        <div id="levelsContainer"></div>
+                        <button type="button" class="btn btn-secondary" onclick="addLevel()">+ Add Level</button>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Create Event</button>
+                </form>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="section">
+                <h2>User Management</h2>
+                <div class="search-bar">
+                    <input type="text" id="userSearch" placeholder="Search users...">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Registered</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results" class="section">
+                <h2>Results & Progress Tracking</h2>
+                <div class="results-filters">
+                    <div class="form-group">
+                        <label for="resultEvent">Select Event:</label>
+                        <select id="resultEvent" onchange="loadEventResults()">
+                            <option value="">All Events</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User Name</th>
+                                <th>Email</th>
+                                <th>Complete Task</th>
+                                <th>Total Task</th>
+                                <th>Completion %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <h2>Settings</h2>
+                <div class="settings-group">
+                    <h3>Platform Settings</h3>
+                    <div class="form-group">
+                        <label for="qrFormat">QR Code Format:</label>
+                        <select id="qrFormat">
+                            <option value="url">URL Format</option>
+                            <option value="data">Data Format</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal for Event Details -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Event Details</h2>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Modal for User Results -->
+    <div id="userResultModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>User Progress Detail</h2>
+            <div id="userResultBody"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 QR Treasure Hunt. All rights reserved.</p>
+    </footer>
+    
+    <script src="../js/php-api.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin-main.js"></script>
+    <script src="../js/admin-events.js"></script>
+    <script src="../js/admin-users.js"></script>
+    <script src="../js/admin-results.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.createElement('div');
+        toggle.classList.add('nav-toggle');
+        toggle.innerHTML = '<span></span><span></span><span></span>';
+        const navbar = document.querySelector('.nav-container');
+        navbar.appendChild(toggle);
+
+        const navMenu = navbar.querySelector('.nav-menu');
+
+        toggle.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+        });
+    });
+    </script>
+</body>
+</html>

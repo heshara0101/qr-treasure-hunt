@@ -1,0 +1,481 @@
+/* -------------------------
+   User Dashboard Base Styles
+-------------------------- */
+.user-container {
+    display: flex;
+    min-height: calc(100vh - 60px);
+    background-color: var(--light-bg);
+}
+
+/* Sidebar (matches admin.css) */
+.sidebar {
+    width: 240px;
+    background: #ffffff;
+    color: #ac9999;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 1rem;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-menu .menu-item {
+    display: block;
+    color: #000000;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    transition: background 0.2s ease;
+}
+
+.sidebar-menu .menu-item:hover,
+.sidebar-menu .menu-item.active {
+    background: #3b82f6;
+    color: #fff;
+}
+
+/* User Content Area */
+.user-content {
+    flex: 1;
+    padding: 2rem;
+}
+
+.section {
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+.section.active {
+    display: block;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.section h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    color: #111827;
+}
+
+/* -------------------------
+   Event Cards (Matches admin style)
+-------------------------- */
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2rem;
+}
+
+.event-card {
+    background: #fff;
+    padding: 1.25rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+.event-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: 1.5rem;
+}
+
+.event-header h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.event-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+}
+
+.event-info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.event-info-label {
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.event-info-value {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+.event-description {
+    color: var(--text-light);
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.event-card .btn {
+    width: 100%;
+    margin-top: auto;
+}
+
+/* Join Button */
+.join-btn {
+    margin-top: 1rem;
+    padding: 0.6rem 1rem;
+    background: var(--primary-color, #3b82f6);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+}
+
+.join-btn:hover {
+    background: #2563eb;
+}
+
+/* -------------------------
+   My Events List
+-------------------------- */
+.my-events-list {
+    display: grid;
+    gap: 1.2rem;
+}
+
+.my-event-item {
+    background: #fff;
+    padding: 1.25rem;
+    border-radius: 10px;
+    border-left: 4px solid var(--primary-color, #3b82f6);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Progress Pills */
+/* Progress */
+.progress-container {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.progress-vertical {
+    width: 20px;               /* thickness */
+    height: 120px;             /* total height */
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse; /* fill rises from bottom */
+}
+
+.progress-vertical .progress-fill {
+    width: 100%;
+    background: #4caf50;
+}
+
+
+.event-progress {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.event-progress h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.level-progress {
+    margin-bottom: 1.5rem;
+}
+
+.level-progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.level-progress-label {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.level-progress-percent {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.tasks-progress {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.75rem;
+}
+
+.task-progress-item {
+    padding: 0.75rem;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.task-progress-item.not-started {
+    background: var(--border-color);
+    color: var(--text-light);
+}
+
+.task-progress-item.in-progress {
+    background: var(--warning-color);
+    color: white;
+}
+
+.task-progress-item.completed {
+    background: var(--success-color);
+    color: white;
+}
+
+.task-progress-item.wrong {
+    background: var(--danger-color);
+    color: white;
+}
+/* -------------------------
+   QR Scanner Section
+-------------------------- */
+.scan-container {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+#reader {
+    border-radius: 10px;
+    width: 100% !important;
+}
+
+/* Scanner Result */
+.scan-result {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    display: none;
+    font-weight: 600;
+}
+
+.scan-result.show { display: block; }
+
+.scan-result.success {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.scan-result.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* -------------------------
+   Task Modal (matches admin modals)
+-------------------------- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+}
+
+.task-question {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.task-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mcq-option {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mcq-option:hover {
+    border-color: var(--primary-color);
+    background: var(--light-bg);
+}
+
+.mcq-option input[type="radio"] {
+    margin-right: 0.75rem;
+}
+
+.mcq-option.selected {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.task-hint {
+    background: var(--warning-color);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    display: none;
+}
+
+.task-hint.show {
+    display: block;
+}
+
+.hint-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.hint-button {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.hint-button:hover {
+    background: #db2777;
+}
+
+/* -------------------------
+   Profile Section
+-------------------------- */
+.profile-box {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    max-width: 500px;
+}
+
+/* Profile button */
+.profile-box button {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--primary-color, #3b82f6);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s;
+}
+
+.profile-box button:hover {
+    background: #2563eb;
+}
+
+/* -------------------------
+   Responsive Adjustments
+-------------------------- */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .user-container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        display: flex;
+        overflow-x: auto;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 0;
+    }
+
+    .user-content {
+        padding: 1rem;
+    }
+
+    .events-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .event-card {
+        padding: 1rem;
+    }
+
+    .my-event-item {
+        padding: 1rem;
+    }
+}

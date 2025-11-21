@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - QR Treasure Hunt</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/user.css">
+</head>
+<body>
+    <!-- Top Navbar -->
+    <div class="navbar user-navbar">
+        <div class="nav-container">
+            <div class="logo">🗺️ QR Treasure Hunt</div>
+            <nav class="nav-menu">
+                <span class="user-info" id="userName">User</span>
+                <a href="#" class="nav-link" onclick="logout()">Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="user-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#"
+                       onclick="showSection('events')"
+                       class="menu-item active"
+                       data-section="events">
+                        📅 Available Events
+                    </a>
+                </li>
+                <li>
+                    <a href="#"
+                       onclick="showSection('my-events')"
+                       class="menu-item"
+                       data-section="my-events">
+                        🎯 My Events
+                    </a>
+                </li>
+                <li>
+                    <!-- IMPORTANT: start scanner when opening Scan QR tab -->
+                    <a href="#"
+                       onclick="showSection('scan-qr'); initializeScanner();"
+                       class="menu-item"
+                       data-section="scan-qr">
+                        📱 Scan QR Code
+                    </a>
+                </li>
+                <li>
+                    <a href="#"
+                       onclick="showSection('progress')"
+                       class="menu-item"
+                       data-section="progress">
+                        📊 My Progress
+                    </a>
+                </li>
+                <li>
+                    <a href="#"
+                       onclick="showSection('profile')"
+                       class="menu-item"
+                       data-section="profile">
+                        👤 My Profile
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="user-content">
+            <!-- Available Events -->
+            <section id="events" class="section active">
+                <h2>Available Events</h2>
+                <div class="events-grid" id="eventsGrid"></div>
+            </section>
+
+            <!-- My Events -->
+            <section id="my-events" class="section">
+                <h2>My Events</h2>
+                <div class="my-events-list" id="myEventsList"></div>
+            </section>
+
+            <!-- Scan QR -->
+            <section id="scan-qr" class="section" style="padding:2rem; max-width:700px; margin:auto;">
+                <h2 style="text-align:center; font-size:1.8rem; margin-bottom:1.5rem; color:#1f2937;">📱 Scan QR Code</h2>
+
+                <div class="scan-container" style="
+                    display:flex; 
+                    flex-direction:column; 
+                    gap:1.5rem;
+                    align-items:center;
+                    background:#f9fafb;
+                    padding:1.5rem;
+                    border-radius:12px;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                ">
+                    <!-- Camera / QR preview -->
+                    <div id="reader" style="
+                        width:100%; 
+                        max-width:480px; 
+                        aspect-ratio:1/1;
+                        border:2px dashed #cbd5e1;
+                        border-radius:12px;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:#fff;
+                    ">
+                        <p style="color:#9ca3af; text-align:center;">Camera preview will appear here</p>
+                    </div>
+
+                    <!-- Scan result / error -->
+                    <div id="scanResult" class="scan-result" style="
+                        width:100%;
+                        text-align:center;
+                        font-size:1rem;
+                        color:#111827;
+                        padding:0.75rem 1rem;
+                        border-radius:8px;
+                        background:#f3f4f6;
+                        min-height:2rem;
+                    "></div>
+
+                    <!-- Upload QR image -->
+                    <div class="qr-upload" style="width:100%; text-align:center;">
+                        <p style="margin-bottom:0.5rem; color:#6b7280;">Or upload a QR code image:</p>
+                        <label for="qrImageInput" style="
+                            display:inline-block;
+                            padding:0.6rem 1.2rem;
+                            background:#3b82f6;
+                            color:white;
+                            font-weight:500;
+                            border-radius:8px;
+                            cursor:pointer;
+                            transition: background 0.2s ease;
+                        " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+                            Choose File
+                        </label>
+                        <input type="file"
+                            id="qrImageInput"
+                            accept="image/*"
+                            onchange="handleImageUpload(event)"
+                            style="display:none;">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress -->
+            <section id="progress" class="section">
+                <h2>My Progress</h2>
+                <div id="progressContainer" class="progress-container"></div>
+            </section>
+
+            <!-- Profile -->
+            <section id="profile" class="section">
+                <h2>My Profile</h2>
+                <form id="profileForm"
+                      onsubmit="handleProfileUpdate(event)"
+                      class="profile-form">
+                    <div class="form-group">
+                        <label for="profileName">Full Name:</label>
+                        <input type="text" id="profileName">
+                    </div>
+                    <div class="form-group">
+                        <label for="profileEmail">Email:</label>
+                        <input type="email" id="profileEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="profilePhone">Phone:</label>
+                        <input type="tel" id="profilePhone">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        Update Profile
+                    </button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="eventDetailsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="eventTitle">Event Title</h2>
+            <div id="eventDetailsBody"></div>
+            <button class="btn btn-primary" onclick="joinEvent()">Join Event</button>
+        </div>
+    </div>
+
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="taskTitle">
+                Level <span id="currentLevel">1</span> - Task <span id="currentTask">1</span>
+            </h2>
+            <div id="taskDetails"></div>
+            <div id="taskForm"></div>
+            <button class="btn btn-primary" onclick="submitTask()">Submit Answer</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 QR Treasure Hunt. All rights reserved.</p>
+    </footer>
+
+    <!-- QR library (must be BEFORE user-scanner.js) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Your JS files -->
+    <script src="../js/php-api.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/user-main.js"></script>
+    <script src="../js/user-events.js"></script>
+    <script src="../js/user-scanner.js"></script>
+    <script src="../js/user-progress.js"></script>
+    
+
+    <!-- Simple showSection if you don't already have it -->
+    <script>
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            const section = document.getElementById(id);
+            if (section) section.classList.add('active');
+
+            document.querySelectorAll('.sidebar .menu-item').forEach(a => {
+                const sec = a.getAttribute('data-section');
+                if (sec === id) a.classList.add('active');
+                else a.classList.remove('active');
+            });
+        }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.createElement('div');
+        toggle.classList.add('nav-toggle');
+        toggle.innerHTML = '<span></span><span></span><span></span>';
+        const navbar = document.querySelector('.nav-container');
+        navbar.appendChild(toggle);
+
+        const navMenu = navbar.querySelector('.nav-menu');
+
+        toggle.addEventListener('click', () => {
+            navMenu.classList.toggle('show');
+        });
+    });
+    </script>
+</body>
+</html>
