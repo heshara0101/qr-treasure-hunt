@@ -181,6 +181,22 @@
     gap: 1.5rem;
 }
 
+.progress-vertical {
+    width: 20px;               /* thickness */
+    height: 120px;             /* total height */
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse; /* fill rises from bottom */
+}
+
+.progress-vertical .progress-fill {
+    width: 100%;
+    background: #4caf50;
+}
+
+
 .event-progress {
     background: white;
     padding: 1.5rem;

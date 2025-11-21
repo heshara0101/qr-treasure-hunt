@@ -72,9 +72,10 @@ async function loadProgress() {
                 <h3>${event.title}</h3>
                 <div class="tasks-container">${tasksHTML}</div>
                 <p style="margin-top:0.5rem;">Progress: ${completedTasks} / ${totalTasks} tasks (${percent}%)</p>
-                <div class="progress-bar" style="background:#eee; border-radius:4px; height:12px; overflow:hidden;">
-                    <div class="progress-fill" style="width:${percent}%; background:#4caf50; height:100%;"></div>
+               <div class="progress-bar" style="background:#eee; border-radius:4px; width:12px; height:120px; overflow:hidden; display:flex; flex-direction:column-reverse;">
+                    <div class="progress-fill" style="height:${percent}%; background:#4caf50; width:100%;"></div>
                 </div>
+
             `;
 
             progressContainer.appendChild(eventProgress);
