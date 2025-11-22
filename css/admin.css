@@ -11,7 +11,7 @@
 .sidebar {
     width: 240px;
     background: #ffffff;
-    color: #ac9999;
+    color: var(--text-light);
     flex-shrink: 0;
     transition: all 0.3s ease;
 }
@@ -28,16 +28,17 @@
 
 .sidebar-menu .menu-item {
     display: block;
-    color: #000000;
+    color: var(--text-dark);
     text-decoration: none;
     padding: 0.5rem 1rem;
-    border-radius: 5px;
-    transition: background 0.2s ease;
+    border-radius: 8px;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
 .sidebar-menu .menu-item:hover,
 .sidebar-menu .menu-item.active {
-    background: #3b82f6;
+    background: rgba(79, 70, 229, 0.15);
+    color: var(--primary-color);
 }
 
 .admin-content {
@@ -68,7 +69,7 @@ table {
 th, td {
     padding: 0.6rem 1rem;
     text-align: left;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
 }
 
 /* ===========================
@@ -78,7 +79,7 @@ th, td {
     background: #fff;
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(15,23,42,0.06);
     max-width: 900px;
     margin: auto;
 }
@@ -89,16 +90,16 @@ th, td {
 
 .form-section h3 {
     margin-bottom: 1rem;
-    color: var(--primary-color, #3b82f6);
+    color: var(--primary-color);
     font-size: 1.25rem;
 }
 
 .level-item {
-    background: var(--light-bg, #f9fafb);
+    background: var(--light-bg);
     padding: 1.5rem;
     border-radius: 8px;
     margin-bottom: 1rem;
-    border-left: 4px solid var(--primary-color, #3b82f6);
+    border-left: 4px solid var(--primary-color);
 }
 
 .level-header {
@@ -110,13 +111,13 @@ th, td {
 }
 
 .level-header h4 {
-    color: var(--primary-color, #3b82f6);
+    color: var(--primary-color);
     margin: 0;
     font-size: 1.1rem;
 }
 
 .remove-level-btn {
-    background: var(--danger-color, #ef4444);
+    background: var(--danger-color);
     color: #fff;
     border: none;
     padding: 0.5rem 1rem;
@@ -139,7 +140,7 @@ th, td {
     padding: 1rem;
     border-radius: 6px;
     margin-bottom: 0.75rem;
-    border: 1px solid var(--border-color, #e5e7eb);
+    border: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -155,7 +156,7 @@ th, td {
 
 .task-type-btn {
     padding: 0.5rem;
-    border: 1px solid var(--border-color, #d1d5db);
+    border: 1px solid var(--border-color);
     background: #fff;
     border-radius: 6px;
     cursor: pointer;
@@ -164,13 +165,13 @@ th, td {
 }
 
 .task-type-btn:hover {
-    background: var(--light-bg, #f3f4f6);
+    background: var(--light-bg);
 }
 
 .task-type-btn.active {
-    background: var(--primary-color, #3b82f6);
+    background: var(--primary-color);
     color: #fff;
-    border-color: var(--primary-color, #3b82f6);
+    border-color: var(--primary-color);
 }
 
 /* QR Code Display */
@@ -180,7 +181,7 @@ th, td {
     border-radius: 10px;
     text-align: center;
     margin-top: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.06);
 }
 
 .qr-display img {
@@ -192,7 +193,7 @@ th, td {
     display: inline-block;
     margin-top: 1rem;
     padding: 0.5rem 1rem;
-    background: var(--primary-color, #3b82f6);
+    background: var(--primary-color);
     color: #fff;
     border-radius: 6px;
     cursor: pointer;
@@ -201,11 +202,8 @@ th, td {
 }
 
 .qr-download-btn:hover {
-    background: #2563eb;
+    background: #4338ca;
 }
-
-
-
 
 /* Stats Cards */
 .stats-grid {
@@ -219,14 +217,14 @@ th, td {
     background: #fff;
     padding: 1rem;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.08);
     text-align: center;
     transition: all 0.3s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 16px rgba(15,23,42,0.12);
 }
 
 .stat-card h3 {
@@ -245,7 +243,7 @@ th, td {
     background: white;
     padding: 1.5rem;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.1);
 }
 
 .recent-activity h3 {
@@ -281,7 +279,7 @@ th, td {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.4);
+    background: rgba(15,23,42,0.45);
     z-index: 2000;
     justify-content: center;
     align-items: center;
@@ -321,24 +319,23 @@ th, td {
 
 /* Button Types */
 .view-btn {
-    background: var(--primary-color, #3b82f6);
+    background: var(--primary-color);
     color: #fff;
 }
 
 .edit-btn {
-    background: var(--warning-color, #f59e0b);
+    background: var(--warning-color);
     color: #fff;
 }
 
 .delete-btn {
-    background: var(--danger-color, #ef4444);
+    background: var(--danger-color);
     color: #fff;
 }
 
-/* Hover Effects */
 .action-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 10px rgba(15,23,42,0.15);
 }
 
 /* Edit Card Wrapper */
@@ -346,7 +343,7 @@ th, td {
     background: #ffffff;
     padding: 1.5rem;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 4px 12px rgba(15,23,42,0.08);
     max-width: 600px;
     margin: auto;
     animation: fadeIn 0.3s ease;
@@ -355,7 +352,7 @@ th, td {
 .edit-title {
     margin-bottom: 1rem;
     font-size: 1.3rem;
-    color: #111827;
+    color: var(--text-dark);
     font-weight: 600;
 }
 
@@ -367,24 +364,23 @@ th, td {
 .form-label {
     display: block;
     font-weight: 600;
-    color: #374151;
+    color: var(--text-dark);
     margin-bottom: 0.4rem;
     font-size: 0.95rem;
 }
 
-/* Inputs, Selects, Textareas */
 .form-input {
     width: 100%;
     padding: 0.7rem 0.9rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     font-size: 1rem;
     transition: 0.2s;
 }
 
 .form-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.25);
     outline: none;
 }
 
@@ -401,7 +397,7 @@ th, td {
 }
 
 .btn-primary {
-    background: #3b82f6;
+    background: var(--primary-color);
     color: #fff;
     padding: 0.7rem 1.2rem;
     border-radius: 8px;
@@ -412,12 +408,12 @@ th, td {
 }
 
 .btn-primary:hover {
-    background: #2563eb;
+    background: #4338ca;
 }
 
 .btn-secondary {
-    background: #e5e7eb;
-    color: #374151;
+    background: #e2e8f0;
+    color: var(--text-dark);
     padding: 0.7rem 1.2rem;
     border-radius: 8px;
     cursor: pointer;
@@ -427,52 +423,46 @@ th, td {
 }
 
 .btn-secondary:hover {
-    background: #d1d5db;
+    background: #cbd5e1;
 }
 
-/* Modern Admin Dropdown */
+/* Modern Dropdown */
 #resultEvent {
     width: 100%;
     padding: 0.75rem;
     font-size: 1rem;
     background: #ffffff;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 10px;
-    color: #111827;
-    appearance: none;         /* removes the ugly arrow */
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    color: var(--text-dark);
+    appearance: none;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(15,23,42,0.06);
     transition: all 0.2s ease;
 }
 
-/* Focus effect */
 #resultEvent:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.25);
     outline: none;
 }
 
-/* Wrapper to add the modern dropdown arrow */
 .select-wrapper {
     position: relative;
     width: 100%;
 }
 
-/* Custom arrow */
 .select-wrapper::after {
     content: "▾";
     position: absolute;
     right: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #6b7280;
+    color: var(--text-light);
     pointer-events: none;
     font-size: 1rem;
 }
 
-/* Animation */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -537,7 +527,6 @@ th, td {
     }
 }
 
-/* Mobile improvements */
 @media (max-width: 480px) {
     #resultEvent {
         font-size: 1rem;

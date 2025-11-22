@@ -115,10 +115,7 @@ class DatabaseInit {
                     options JSON,
                     correct_answer VARCHAR(500),
                     qr_code_value VARCHAR(500),
-<<<<<<< HEAD
                     qr_location VARCHAR(500),
-=======
->>>>>>> 439c280fb684751b5ead34b88abe5739ecfd2ad1
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (level_id) REFERENCES levels(id) ON DELETE CASCADE
                 )
